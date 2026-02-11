@@ -8,10 +8,13 @@ import io.github.danny270793.analytics.backend.application.service.UserService;
 import io.github.danny270793.analytics.backend.domain.model.User;
 import io.github.danny270793.analytics.backend.infrastructure.persistence.entity.UserEntity;
 import io.github.danny270793.analytics.backend.infrastructure.persistence.repository.UserJpaRepository;
+import io.github.danny270793.analytics.backend.infrastructure.security.JwtUtil;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -22,10 +25,12 @@ public class UserServiceImpl implements UserService {
 
     private final UserJpaRepository userJpaRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
-    public UserServiceImpl(UserJpaRepository userJpaRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserJpaRepository userJpaRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
         this.userJpaRepository = userJpaRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
     }
 
     @Override
@@ -66,10 +71,19 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Invalid username or password");
         }
 
+        // Generate JWT token
+        UserDetails userDetails = new org.springframework.security.core.userdetails.User(
+                userEntity.getUsername(),
+                userEntity.getPassword(),
+                new ArrayList<>()
+        );
+        String token = jwtUtil.generateToken(userDetails);
+
         return new LoginResponse(
                 userEntity.getId(),
                 userEntity.getUsername(),
                 userEntity.getEmail(),
+                token,
                 "Login successful"
         );
     }
