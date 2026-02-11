@@ -6,15 +6,17 @@ public class LoginResponse {
     private UUID userId;
     private String username;
     private String email;
+    private String token;
     private String message;
 
     public LoginResponse() {
     }
 
-    public LoginResponse(UUID userId, String username, String email, String message) {
+    public LoginResponse(UUID userId, String username, String email, String token, String message) {
         this.userId = userId;
         this.username = username;
         this.email = email;
+        this.token = token;
         this.message = message;
     }
 
@@ -40,6 +42,14 @@ public class LoginResponse {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 
     public String getMessage() {
