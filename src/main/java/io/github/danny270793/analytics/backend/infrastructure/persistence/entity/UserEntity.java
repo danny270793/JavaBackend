@@ -1,6 +1,5 @@
 package io.github.danny270793.analytics.backend.infrastructure.persistence.entity;
 
-import io.github.danny270793.analytics.backend.domain.model.User;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -49,21 +48,6 @@ public class UserEntity {
         this.password = password;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
-    }
-
-    public static UserEntity fromDomain(User user) {
-        return new UserEntity(
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getPassword(),
-                user.getCreatedAt(),
-                user.getUpdatedAt()
-        );
-    }
-
-    public User toDomain() {
-        return new User(id, username, email, password, createdAt, updatedAt);
     }
 
     public UUID getId() {
