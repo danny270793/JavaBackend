@@ -29,7 +29,7 @@ docker exec -it analytics-postgres psql -U analytics -d analyticsdb \
 
 ### Create New Migration
 
-**Step 1: Create changeset file**
+**Step 1: Create changeset file (use numeric prefix for ordering)**
 ```bash
 touch src/main/resources/db/changelog/changes/003-add-user-phone.yaml
 ```
@@ -62,28 +62,19 @@ databaseChangeLog:
             columnName: phone
 ```
 
-**Step 3: Add to master changelog**
-```yaml
-# Edit db.changelog-master.yaml
-databaseChangeLog:
-  - include:
-      file: db/changelog/changes/001-create-users-table.yaml
-  - include:
-      file: db/changelog/changes/002-create-events-table.yaml
-  - include:
-      file: db/changelog/changes/003-add-user-phone.yaml
-```
-
-**Step 4: Apply**
+**Step 3: Apply** (automatically loaded via `includeAll`)
 ```bash
 docker-compose restart backend
+# The master changelog automatically includes all files from changes/ directory
 ```
 
-**Step 5: Commit**
+**Step 4: Commit**
 ```bash
-git add src/main/resources/db/changelog/
+git add src/main/resources/db/changelog/changes/003-add-user-phone.yaml
 git commit -m "feat: Add phone column to users table"
 ```
+
+**Note:** The master changelog uses `includeAll` to automatically load all YAML files from the `changes/` directory in alphabetical order. No need to manually update the master file!
 
 ## Current Schema
 
