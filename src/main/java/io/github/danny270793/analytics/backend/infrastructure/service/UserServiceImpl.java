@@ -5,6 +5,10 @@ import io.github.danny270793.analytics.backend.application.dto.response.LoginRes
 import io.github.danny270793.analytics.backend.application.dto.request.RegisterUserRequest;
 import io.github.danny270793.analytics.backend.application.dto.response.UserResponse;
 import io.github.danny270793.analytics.backend.application.service.UserService;
+import io.github.danny270793.analytics.backend.domain.exception.EmailAlreadyExistsException;
+import io.github.danny270793.analytics.backend.domain.exception.InvalidCredentialsException;
+import io.github.danny270793.analytics.backend.domain.exception.UserNotFoundException;
+import io.github.danny270793.analytics.backend.domain.exception.UsernameAlreadyExistsException;
 import io.github.danny270793.analytics.backend.domain.model.User;
 import io.github.danny270793.analytics.backend.infrastructure.persistence.adapter.UserEntityAdapter;
 import io.github.danny270793.analytics.backend.infrastructure.persistence.entity.UserEntity;
@@ -44,13 +48,13 @@ public class UserServiceImpl implements UserService {
         // Check if username already exists
         if (userJpaRepository.existsByUsername(request.getUsername())) {
             log.warn("Registration failed: Username already exists - {}", request.getUsername());
-            throw new RuntimeException("Username already exists");
+            throw new UsernameAlreadyExistsException(request.getUsername());
         }
 
         // Check if email already exists
         if (userJpaRepository.existsByEmail(request.getEmail())) {
             log.warn("Registration failed: Email already exists - {}", request.getEmail());
-            throw new RuntimeException("Email already exists");
+            throw new EmailAlreadyExistsException(request.getEmail());
         }
 
         // Create user with encoded password
@@ -78,7 +82,7 @@ public class UserServiceImpl implements UserService {
         UserEntity userEntity = userJpaRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> {
                     log.warn("Login failed: User not found - username={}", request.getUsername());
-                    return new RuntimeException("Invalid username or password");
+                    return new InvalidCredentialsException(request.getUsername());
                 });
 
         log.debug("User found in database: id={}, username={}", userEntity.getId(), userEntity.getUsername());
@@ -86,7 +90,7 @@ public class UserServiceImpl implements UserService {
         // Verify password
         if (!passwordEncoder.matches(request.getPassword(), userEntity.getPassword())) {
             log.warn("Login failed: Invalid password for user - username={}", request.getUsername());
-            throw new RuntimeException("Invalid username or password");
+            throw new InvalidCredentialsException(request.getUsername());
         }
 
         log.debug("Password verified successfully for user: {}", request.getUsername());
@@ -117,7 +121,7 @@ public class UserServiceImpl implements UserService {
         UserEntity userEntity = userJpaRepository.findById(id)
                 .orElseThrow(() -> {
                     log.warn("User not found with id: {}", id);
-                    return new RuntimeException("User not found with id: " + id);
+                    return new UserNotFoundException(id);
                 });
         log.debug("User found: username={}", userEntity.getUsername());
         return UserResponse.fromDomain(UserEntityAdapter.toDomain(userEntity));
@@ -130,7 +134,7 @@ public class UserServiceImpl implements UserService {
         UserEntity userEntity = userJpaRepository.findByUsername(username)
                 .orElseThrow(() -> {
                     log.warn("User not found with username: {}", username);
-                    return new RuntimeException("User not found with username: " + username);
+                    return new UserNotFoundException(username);
                 });
         return UserResponse.fromDomain(UserEntityAdapter.toDomain(userEntity));
     }
@@ -151,7 +155,7 @@ public class UserServiceImpl implements UserService {
         log.info("Attempting to delete user: id={}", id);
         if (!userJpaRepository.existsById(id)) {
             log.warn("Delete failed: User not found with id: {}", id);
-            throw new RuntimeException("User not found with id: " + id);
+            throw new UserNotFoundException(id);
         }
         userJpaRepository.deleteById(id);
         log.info("User deleted successfully: id={}", id);
