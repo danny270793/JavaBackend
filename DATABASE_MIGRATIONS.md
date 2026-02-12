@@ -28,15 +28,16 @@ db/changelog/
 
 ### Master Changelog
 
-The master file includes all changesets:
+The master file automatically includes all changesets from the `changes/` directory:
 
 ```yaml
 databaseChangeLog:
-  - include:
-      file: db/changelog/changes/001-create-users-table.yaml
-  - include:
-      file: db/changelog/changes/002-create-events-table.yaml
+  - includeAll:
+      path: db/changelog/changes/
+      relativeToChangelogFile: false
 ```
+
+Liquibase loads all YAML files from `db/changelog/changes/` in alphabetical order, which is why we use numeric prefixes (001-, 002-, etc.).
 
 ### Changeset Format
 
@@ -142,20 +143,7 @@ databaseChangeLog:
             columnName: active
 ```
 
-### 3. Add to Master Changelog
-
-```yaml
-# db.changelog-master.yaml
-databaseChangeLog:
-  - include:
-      file: db/changelog/changes/001-create-users-table.yaml
-  - include:
-      file: db/changelog/changes/002-create-events-table.yaml
-  - include:
-      file: db/changelog/changes/003-add-user-active-status.yaml
-```
-
-### 4. Test Migration
+### 3. Test Migration (Auto-loaded via includeAll)
 
 ```bash
 # Build the application
@@ -172,7 +160,7 @@ docker exec -it analytics-postgres psql -U analytics -d analyticsdb \
 ### 5. Commit Migration
 
 ```bash
-git add src/main/resources/db/changelog/
+git add src/main/resources/db/changelog/changes/003-add-user-active-status.yaml
 git commit -m "feat: Add active status column to users table"
 ```
 
