@@ -1,6 +1,5 @@
 package io.github.danny270793.analytics.backend.infrastructure.persistence.entity;
 
-import io.github.danny270793.analytics.backend.domain.model.Event;
 import io.github.danny270793.analytics.backend.domain.model.EventType;
 import jakarta.persistence.*;
 
@@ -31,19 +30,6 @@ public class EventEntity {
         this.type = type;
         this.from = from;
         this.to = to;
-    }
-
-    public static EventEntity fromDomain(Event event) {
-        return new EventEntity(
-                event.getId(),
-                event.getType(),
-                event.getFrom(),
-                event.getTo()
-        );
-    }
-
-    public Event toDomain() {
-        return new Event(id, type, from, to);
     }
 
     public UUID getId() {
