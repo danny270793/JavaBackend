@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: analytics-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:h2:mem:analyticsdb
+      - JWT_SECRET=${JWT_SECRET:-mySecretKeyForJWTTokenGenerationThatIsAtLeast256BitsLongForHS256Algorithm}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-86400000}
+    networks:
+      - analytics-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: PostgreSQL database (uncomment to use instead of H2)
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: analytics-postgres
+  #   environment:
+  #     POSTGRES_DB: analyticsdb
+  #     POSTGRES_USER: analytics
+  #     POSTGRES_PASSWORD: analytics123
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   networks:
+  #     - analytics-network
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U analytics"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+networks:
+  analytics-network:
+    driver: bridge
+
+# volumes:
+#   postgres-data:
