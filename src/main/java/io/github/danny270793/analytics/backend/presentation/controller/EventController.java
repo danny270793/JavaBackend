@@ -1,8 +1,8 @@
 package io.github.danny270793.analytics.backend.presentation.controller;
 
-import io.github.danny270793.analytics.backend.application.dto.CreateEventRequest;
-import io.github.danny270793.analytics.backend.application.dto.EventResponse;
-import io.github.danny270793.analytics.backend.application.dto.UpdateEventRequest;
+import io.github.danny270793.analytics.backend.application.dto.request.CreateEventRequest;
+import io.github.danny270793.analytics.backend.application.dto.response.EventResponse;
+import io.github.danny270793.analytics.backend.application.dto.request.UpdateEventRequest;
 import io.github.danny270793.analytics.backend.application.service.EventService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -28,7 +28,7 @@ public class EventController {
     @PostMapping
     public ResponseEntity<EventResponse> createEvent(@Valid @RequestBody CreateEventRequest request) {
         log.info("POST /api/events - Received create event request: type={}", request.getType());
-        EventResponse response = eventService.create(request);
+        EventResponse response = eventService.createEvent(request);
         log.info("POST /api/events - Event created successfully: id={}", response.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -36,14 +36,14 @@ public class EventController {
     @GetMapping("/{id}")
     public ResponseEntity<EventResponse> getEventById(@PathVariable UUID id) {
         log.debug("GET /api/events/{} - Fetching event", id);
-        EventResponse response = eventService.read(id);
+        EventResponse response = eventService.findEventById(id);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping
     public ResponseEntity<List<EventResponse>> getAllEvents() {
         log.debug("GET /api/events - Fetching all events");
-        List<EventResponse> responses = eventService.read();
+        List<EventResponse> responses = eventService.findAllEvents();
         log.debug("GET /api/events - Returning {} events", responses.size());
         return ResponseEntity.ok(responses);
     }
@@ -53,7 +53,7 @@ public class EventController {
             @PathVariable UUID id,
             @RequestBody UpdateEventRequest request) {
         log.info("PUT /api/events/{} - Received update event request", id);
-        EventResponse response = eventService.update(id, request);
+        EventResponse response = eventService.updateEvent(id, request);
         log.info("PUT /api/events/{} - Event updated successfully", id);
         return ResponseEntity.ok(response);
     }
@@ -61,7 +61,7 @@ public class EventController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEvent(@PathVariable UUID id) {
         log.info("DELETE /api/events/{} - Received delete event request", id);
-        eventService.delete(id);
+        eventService.deleteEvent(id);
         log.info("DELETE /api/events/{} - Event deleted successfully", id);
         return ResponseEntity.noContent().build();
     }
