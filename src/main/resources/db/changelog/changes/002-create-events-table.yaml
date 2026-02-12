@@ -27,10 +27,8 @@ databaseChangeLog:
                   type: varchar(255)
                   constraints:
                     nullable: false
-        - addCheckConstraint:
-            constraintName: chk_event_type
-            tableName: events
-            checkCondition: "type IN ('NAVIGATION', 'ACTION')"
+        - sql:
+            sql: "ALTER TABLE events ADD CONSTRAINT chk_event_type CHECK (type IN ('NAVIGATION', 'ACTION'))"
         - createIndex:
             indexName: idx_events_type
             tableName: events
