@@ -1,0 +1,31 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-insert-default-admin-user
+      author: analytics-backend
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: 00000000-0000-0000-0000-000000000001
+              - column:
+                  name: username
+                  value: admin
+              - column:
+                  name: email
+                  value: admin@analytics.local
+              - column:
+                  name: password
+                  value: $2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+      rollback:
+        - delete:
+            tableName: users
+            where: username = 'admin'
+      comment: "Insert default admin user with credentials admin/admin (BCrypt encrypted)"
