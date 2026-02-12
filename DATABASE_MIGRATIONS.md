@@ -1,59 +1,83 @@
-# Database Migrations Guide
+# Database Migrations Guide - Liquibase
 
-This guide explains how to use Flyway database migrations to manage schema changes.
+This guide explains how to use Liquibase database migrations to manage schema changes.
 
 ## Overview
 
-The project uses **Flyway** for database version control and schema migrations. This ensures:
+The project uses **Liquibase** for database version control and schema migrations. This ensures:
 - ✅ **Version Control**: Track all database changes in Git
 - ✅ **Reproducibility**: Apply same changes across environments
-- ✅ **Auditing**: Know who changed what and when
-- ✅ **Safety**: Validate schema before application starts
+- ✅ **Rollback Support**: Easy rollback with built-in commands
+- ✅ **Multiple Formats**: YAML, XML, JSON, or SQL
+- ✅ **Safety**: Validates schema before application starts
 
 ## How It Works
 
-### Migration Files
+### Changelog Files
 
-Migrations are SQL files located in `src/main/resources/db/migration/`
+Liquibase uses changelog files in `src/main/resources/db/changelog/`
 
-**Naming Convention:**
+**Structure:**
 ```
-V{version}__{description}.sql
+db/changelog/
+├── db.changelog-master.yaml           # Master file
+└── changes/
+    ├── 001-create-users-table.yaml    # Changeset 1
+    └── 002-create-events-table.yaml   # Changeset 2
 ```
 
-Examples:
-- `V1__create_users_table.sql`
-- `V2__create_events_table.sql`
-- `V3__add_user_role_column.sql`
+### Master Changelog
 
-### Version Numbers
+The master file includes all changesets:
 
-- **V1, V2, V3**: Major migrations (tables, columns)
-- **V1.1, V1.2**: Minor migrations (indexes, constraints)
-- Use sequential numbering
-- Never modify applied migrations!
+```yaml
+databaseChangeLog:
+  - include:
+      file: db/changelog/changes/001-create-users-table.yaml
+  - include:
+      file: db/changelog/changes/002-create-events-table.yaml
+```
 
-### Flyway Metadata
+### Changeset Format
 
-Flyway tracks migrations in the `flyway_schema_history` table:
+Each changeset has a unique ID and author:
+
+```yaml
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-users-table
+      author: analytics-backend
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+```
+
+### Liquibase Metadata
+
+Liquibase tracks migrations in `DATABASECHANGELOG` and `DATABASECHANGELOGLOCK` tables:
 
 ```sql
-SELECT * FROM flyway_schema_history;
+SELECT * FROM DATABASECHANGELOG;
 ```
 
 Shows:
-- Version number
-- Description
-- Script name
+- ID
+- Author
+- Filename
+- Date executed
+- Order executed
 - Checksum
-- Execution time
-- Success status
+- Description
 
 ## Current Migrations
 
-### V1: Create Users Table
+### 001: Create Users Table
 
-**File:** `V1__create_users_table.sql`
+**File:** `001-create-users-table.yaml`
 
 Creates the users table with:
 - UUID primary key
@@ -61,42 +85,77 @@ Creates the users table with:
 - Email (unique, indexed)
 - Password (BCrypt encrypted)
 - Timestamps (created_at, updated_at)
+- Rollback support
 
-### V2: Create Events Table
+### 002: Create Events Table
 
-**File:** `V2__create_events_table.sql`
+**File:** `002-create-events-table.yaml`
 
 Creates the events table with:
 - UUID primary key
-- Event type (NAVIGATION or ACTION)
+- Event type with CHECK constraint
 - From/To values
-- Type constraint check
-- Type index for queries
+- Type index
+- Rollback support
 
 ## Creating New Migrations
 
-### 1. Create Migration File
+### 1. Create Changeset File
 
 ```bash
-# Navigate to migrations directory
-cd src/main/resources/db/migration
+# Navigate to changelog directory
+cd src/main/resources/db/changelog/changes
 
-# Create new migration (increment version number)
-touch V3__add_user_active_status.sql
+# Create new changeset (increment number)
+touch 003-add-user-active-status.yaml
 ```
 
-### 2. Write SQL Migration
+### 2. Write YAML Changeset
 
-```sql
--- V3__add_user_active_status.sql
-ALTER TABLE users ADD COLUMN active BOOLEAN DEFAULT TRUE NOT NULL;
-
-CREATE INDEX IF NOT EXISTS idx_users_active ON users(active);
-
-COMMENT ON COLUMN users.active IS 'User account active status';
+```yaml
+databaseChangeLog:
+  - changeSet:
+      id: 003-add-user-active-status
+      author: your-name
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: active
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_users_active
+            tableName: users
+            columns:
+              - column:
+                  name: active
+      rollback:
+        - dropIndex:
+            indexName: idx_users_active
+            tableName: users
+        - dropColumn:
+            tableName: users
+            columnName: active
 ```
 
-### 3. Test Migration Locally
+### 3. Add to Master Changelog
+
+```yaml
+# db.changelog-master.yaml
+databaseChangeLog:
+  - include:
+      file: db/changelog/changes/001-create-users-table.yaml
+  - include:
+      file: db/changelog/changes/002-create-events-table.yaml
+  - include:
+      file: db/changelog/changes/003-add-user-active-status.yaml
+```
+
+### 4. Test Migration
 
 ```bash
 # Build the application
@@ -105,160 +164,254 @@ COMMENT ON COLUMN users.active IS 'User account active status';
 # Start with Docker Compose
 docker-compose up -d
 
-# Check Flyway applied the migration
+# Check Liquibase applied the migration
 docker exec -it analytics-postgres psql -U analytics -d analyticsdb \
-  -c "SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank;"
+  -c "SELECT id, author, filename, dateexecuted FROM DATABASECHANGELOG ORDER BY dateexecuted;"
 ```
 
-### 4. Commit Migration
+### 5. Commit Migration
 
 ```bash
-git add src/main/resources/db/migration/V3__add_user_active_status.sql
+git add src/main/resources/db/changelog/
 git commit -m "feat: Add active status column to users table"
 ```
 
 ## Migration Best Practices
 
-### DO
+### DO ✅
 
-✅ **Write Idempotent Migrations**
-```sql
--- Good: Safe to run multiple times
-CREATE TABLE IF NOT EXISTS users (...);
-ALTER TABLE users ADD COLUMN IF NOT EXISTS active BOOLEAN;
+**Use Descriptive IDs**
+```yaml
+changeSet:
+  id: 001-create-users-table  # Good
+  id: 1                        # Bad
 ```
 
-✅ **Add Indexes**
-```sql
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+**Write Rollback Scripts**
+```yaml
+rollback:
+  - dropTable:
+      tableName: users
 ```
 
-✅ **Add Comments**
-```sql
-COMMENT ON TABLE users IS 'Application users';
-COMMENT ON COLUMN users.email IS 'User email address';
+**Use Built-in Changes**
+```yaml
+# Good: Use Liquibase abstractions
+- addColumn:
+    tableName: users
+    columns:
+      - column:
+          name: active
+          type: boolean
+
+# Avoid: Raw SQL when possible
+- sql:
+    sql: "ALTER TABLE users ADD COLUMN active BOOLEAN"
 ```
 
-✅ **Use Constraints**
-```sql
-ALTER TABLE events ADD CONSTRAINT chk_event_type 
-  CHECK (type IN ('NAVIGATION', 'ACTION'));
+**Add Context and Labels**
+```yaml
+changeSet:
+  id: 001-create-users-table
+  author: analytics-backend
+  context: production
+  labels: schema,users
 ```
 
-✅ **Test Rollback Plan**
-```sql
--- Keep rollback script in comments
--- ROLLBACK:
--- ALTER TABLE users DROP COLUMN active;
+**Use Preconditions**
+```yaml
+changeSet:
+  id: 002-add-index
+  preConditions:
+    - not:
+        - indexExists:
+            indexName: idx_users_email
+  changes:
+    - createIndex:
+        indexName: idx_users_email
+        tableName: users
 ```
 
-### DON'T
+### DON'T ❌
 
-❌ **Never Modify Applied Migrations**
-- Once applied in any environment, migrations are immutable
-- Create new migration to fix issues
+❌ **Never Modify Applied Changesets**
+- Once applied, changesets are immutable
+- Create new changeset to fix issues
 
-❌ **Don't Use Application Objects**
-- Don't reference JPA entities
-- Write pure SQL
+❌ **Don't Use Complex Logic**
+- Keep changesets simple
+- Split complex changes into multiple changesets
 
-❌ **Avoid Data Migrations in Schema Migrations**
-- Separate schema (DDL) from data (DML)
-- Use versioned data migrations if needed
-
-❌ **Don't Skip Version Numbers**
-- V1, V2, V3 ✅
-- V1, V3, V5 ❌
+❌ **Avoid Raw SQL**
+- Use Liquibase abstractions for database independence
+- Use SQL only when necessary
 
 ## Common Migration Scenarios
 
 ### Add Column
 
-```sql
--- V3__add_user_phone.sql
-ALTER TABLE users ADD COLUMN phone VARCHAR(20);
-CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone);
-COMMENT ON COLUMN users.phone IS 'User phone number';
+```yaml
+databaseChangeLog:
+  - changeSet:
+      id: 003-add-user-phone
+      author: analytics-backend
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: phone
+                  type: varchar(20)
+      rollback:
+        - dropColumn:
+            tableName: users
+            columnName: phone
 ```
 
 ### Modify Column
 
-```sql
--- V4__increase_username_length.sql
-ALTER TABLE users ALTER COLUMN username TYPE VARCHAR(100);
+```yaml
+databaseChangeLog:
+  - changeSet:
+      id: 004-increase-username-length
+      author: analytics-backend
+      changes:
+        - modifyDataType:
+            tableName: users
+            columnName: username
+            newDataType: varchar(100)
 ```
 
 ### Add Foreign Key
 
-```sql
--- V5__add_user_events_relation.sql
-ALTER TABLE events ADD COLUMN user_id UUID;
-ALTER TABLE events ADD CONSTRAINT fk_events_user 
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-CREATE INDEX IF NOT EXISTS idx_events_user_id ON events(user_id);
+```yaml
+databaseChangeLog:
+  - changeSet:
+      id: 005-add-user-events-relation
+      author: analytics-backend
+      changes:
+        - addColumn:
+            tableName: events
+            columns:
+              - column:
+                  name: user_id
+                  type: uuid
+        - addForeignKeyConstraint:
+            constraintName: fk_events_user
+            baseTableName: events
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - createIndex:
+            indexName: idx_events_user_id
+            tableName: events
+            columns:
+              - column:
+                  name: user_id
 ```
 
 ### Create New Table
 
-```sql
--- V6__create_sessions_table.sql
-CREATE TABLE sessions (
-    id UUID PRIMARY KEY,
-    user_id UUID NOT NULL,
-    token VARCHAR(255) NOT NULL,
-    expires_at TIMESTAMP NOT NULL,
-    created_at TIMESTAMP NOT NULL,
-    CONSTRAINT fk_sessions_user FOREIGN KEY (user_id) REFERENCES users(id)
-);
-
-CREATE INDEX idx_sessions_token ON sessions(token);
-CREATE INDEX idx_sessions_user_id ON sessions(user_id);
-```
-
-### Add Enum Type
-
-```sql
--- V7__create_user_role_enum.sql
-CREATE TYPE user_role AS ENUM ('USER', 'ADMIN', 'MODERATOR');
-
-ALTER TABLE users ADD COLUMN role user_role DEFAULT 'USER' NOT NULL;
-CREATE INDEX idx_users_role ON users(role);
+```yaml
+databaseChangeLog:
+  - changeSet:
+      id: 006-create-sessions-table
+      author: analytics-backend
+      changes:
+        - createTable:
+            tableName: sessions
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: token
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expires_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_sessions_token
+            tableName: sessions
+            columns:
+              - column:
+                  name: token
 ```
 
 ### Data Migration
 
-```sql
--- V8__populate_default_roles.sql
-UPDATE users SET role = 'ADMIN' WHERE email = 'admin@example.com';
-UPDATE users SET role = 'USER' WHERE role IS NULL;
+```yaml
+databaseChangeLog:
+  - changeSet:
+      id: 007-populate-default-roles
+      author: analytics-backend
+      changes:
+        - update:
+            tableName: users
+            columns:
+              - column:
+                  name: role
+                  value: ADMIN
+            where: "email = 'admin@example.com'"
 ```
 
-## Flyway Configuration
+### Use SQL (When Necessary)
+
+```yaml
+databaseChangeLog:
+  - changeSet:
+      id: 008-create-custom-function
+      author: analytics-backend
+      changes:
+        - sql:
+            sql: |
+              CREATE OR REPLACE FUNCTION update_updated_at_column()
+              RETURNS TRIGGER AS $$
+              BEGIN
+                NEW.updated_at = NOW();
+                RETURN NEW;
+              END;
+              $$ LANGUAGE plpgsql;
+      rollback:
+        - sql:
+            sql: "DROP FUNCTION IF EXISTS update_updated_at_column()"
+```
+
+## Liquibase Configuration
 
 ### application.properties
 
 ```properties
-# Flyway Configuration
-spring.flyway.enabled=true
-spring.flyway.locations=classpath:db/migration
-spring.flyway.baseline-on-migrate=true
-spring.flyway.baseline-version=0
-spring.flyway.validate-on-migrate=true
+# Liquibase Configuration
+spring.liquibase.enabled=true
+spring.liquibase.change-log=classpath:db/changelog/db.changelog-master.yaml
+spring.liquibase.drop-first=false
 ```
 
 ### Configuration Options
 
 | Property | Value | Description |
 |----------|-------|-------------|
-| `enabled` | `true` | Enable Flyway migrations |
-| `locations` | `classpath:db/migration` | Migration scripts location |
-| `baseline-on-migrate` | `true` | Create baseline for existing databases |
-| `baseline-version` | `0` | Version to use as baseline |
-| `validate-on-migrate` | `true` | Validate checksums before migrating |
+| `enabled` | `true` | Enable Liquibase migrations |
+| `change-log` | `classpath:db/changelog/db.changelog-master.yaml` | Master changelog location |
+| `drop-first` | `false` | Drop all database objects before migrating (dev only!) |
 
 ## Checking Migration Status
 
-### View Applied Migrations
+### View Applied Changesets
 
 ```sql
 -- Connect to database
@@ -266,17 +419,15 @@ docker exec -it analytics-postgres psql -U analytics -d analyticsdb
 
 -- View migration history
 SELECT 
-    installed_rank,
-    version,
-    description,
-    type,
-    script,
-    checksum,
-    installed_on,
-    execution_time,
-    success
-FROM flyway_schema_history
-ORDER BY installed_rank;
+    id,
+    author,
+    filename,
+    dateexecuted,
+    orderexecuted,
+    exectype,
+    md5sum
+FROM DATABASECHANGELOG
+ORDER BY dateexecuted;
 ```
 
 ### Check Pending Migrations
@@ -285,81 +436,110 @@ ORDER BY installed_rank;
 # Build application to check
 ./gradlew clean build
 
-# Check logs for Flyway output
-# Look for: "Migrating schema `public` to version X"
+# Check logs for Liquibase output
+docker logs analytics-backend | grep -i liquibase
+```
+
+## Rollback
+
+### Rollback Last Changeset
+
+```bash
+# Using Liquibase CLI (if installed)
+liquibase rollback-count 1
+
+# Or via SQL (not recommended)
+docker exec -it analytics-postgres psql -U analytics -d analyticsdb \
+  -c "DELETE FROM DATABASECHANGELOG WHERE id = '003-add-user-active-status';"
+```
+
+### Rollback to Specific Tag
+
+```yaml
+# Tag a specific point
+databaseChangeLog:
+  - changeSet:
+      id: tag-v1.0
+      author: analytics-backend
+      changes:
+        - tagDatabase:
+            tag: v1.0
+```
+
+```bash
+# Rollback to tag
+liquibase rollback v1.0
 ```
 
 ## Troubleshooting
 
-### Migration Failed
+### Changeset Failed
 
-**Problem:** Migration failed and application won't start
+**Problem:** Changeset failed and application won't start
 
 **Solution:**
 ```sql
--- 1. Check failed migration
-SELECT * FROM flyway_schema_history WHERE success = false;
+-- 1. Check failed changeset
+SELECT * FROM DATABASECHANGELOG WHERE exectype = 'FAILED';
 
--- 2. Manual repair (if safe)
-DELETE FROM flyway_schema_history WHERE version = 'X';
+-- 2. Clear lock (if stuck)
+DELETE FROM DATABASECHANGELOGLOCK;
 
--- 3. Fix the migration file and retry
+-- 3. Remove failed changeset entry
+DELETE FROM DATABASECHANGELOG WHERE id = 'failed-changeset-id';
+
+-- 4. Fix the changeset file and retry
 ```
 
 ### Checksum Mismatch
 
-**Problem:** `Validate failed: Migration checksum mismatch`
+**Problem:** `Validation Failed: Checksum mismatch`
 
-**Cause:** Migration file was modified after being applied
+**Cause:** Changeset file was modified after being applied
+
+**Solution:**
+```bash
+# Option 1: Clear checksums (if change is safe)
+liquibase clear-checksums
+
+# Option 2: Create new changeset to fix issue
+# Don't modify existing changeset!
+```
+
+### Lock Not Released
+
+**Problem:** `Waiting for changelog lock`
 
 **Solution:**
 ```sql
--- Option 1: Repair checksum (if change is safe)
--- Run: ./gradlew flywayRepair
-
--- Option 2: Create new migration to fix issue
--- Don't modify existing migration!
+-- Force release lock
+DELETE FROM DATABASECHANGELOGLOCK;
 ```
-
-### Missing Migration
-
-**Problem:** Gap in version numbers
-
-**Solution:**
-- Check if migration file was deleted
-- Restore from Git: `git checkout V3__*.sql`
-- Never delete applied migrations
-
-### Baseline Required
-
-**Problem:** Existing database without Flyway history
-
-**Solution:**
-Already configured with `baseline-on-migrate=true`
-- Flyway creates baseline automatically
-- Applies only new migrations
 
 ## Development Workflow
 
 ### Local Development
 
 ```bash
-# 1. Create new migration
-touch src/main/resources/db/migration/V3__my_changes.sql
+# 1. Create new changeset
+touch src/main/resources/db/changelog/changes/003-my-changes.yaml
 
-# 2. Write SQL
-vim src/main/resources/db/migration/V3__my_changes.sql
+# 2. Write YAML
+vim src/main/resources/db/changelog/changes/003-my-changes.yaml
 
-# 3. Test locally
+# 3. Add to master
+vim src/main/resources/db/changelog/db.changelog-master.yaml
+
+# 4. Test locally
 docker-compose down -v  # Fresh database
 docker-compose up -d    # Apply migrations
 
-# 4. Verify
+# 5. Verify
 docker exec -it analytics-postgres psql -U analytics -d analyticsdb \
-  -c "SELECT * FROM flyway_schema_history;"
+  -c "SELECT * FROM DATABASECHANGELOG WHERE id = '003-my-changes';"
 
-# 5. Commit
-git add src/main/resources/db/migration/V3__my_changes.sql
+# 6. Commit
+git add src/main/resources/db/changelog/
 git commit -m "feat: Add my changes to database"
 ```
 
@@ -373,160 +553,125 @@ git pull origin main
 docker-compose restart backend
 
 # 3. Check applied
-docker logs analytics-backend | grep Flyway
+docker logs analytics-backend | grep Liquibase
 ```
 
-## CI/CD Integration
+## Advanced Features
 
-### Build Pipeline
+### Contexts
+
+Run different changesets for different environments:
 
 ```yaml
-# .github/workflows/build.yml
-- name: Test with Flyway
-  run: |
-    docker-compose up -d postgres
-    ./gradlew clean build
-    # Flyway migrations applied automatically
+changeSet:
+  id: 001-dev-data
+  author: analytics-backend
+  context: dev
+  changes:
+    - insert:
+        tableName: users
+        columns:
+          - column:
+              name: username
+              value: testuser
 ```
-
-### Deployment Pipeline
-
-```yaml
-# .github/workflows/deploy.yml
-- name: Deploy with Flyway
-  run: |
-    # Migrations applied on application startup
-    docker-compose up -d
-```
-
-## Production Deployment
-
-### Pre-Deployment
-
-1. **Review migrations**
-   ```bash
-   ls -la src/main/resources/db/migration/
-   ```
-
-2. **Test on staging**
-   ```bash
-   # Deploy to staging first
-   # Verify migrations work correctly
-   ```
-
-3. **Backup production database**
-   ```bash
-   docker exec analytics-postgres pg_dump -U analytics analyticsdb > backup.sql
-   ```
-
-### Deployment
-
-```bash
-# 1. Deploy new version
-docker-compose pull
-docker-compose up -d
-
-# 2. Check migration status
-docker logs analytics-backend | grep Flyway
-
-# 3. Verify schema
-docker exec -it analytics-postgres psql -U analytics -d analyticsdb \
-  -c "\dt"  # List tables
-```
-
-### Rollback
-
-If migration fails:
-
-```bash
-# 1. Stop application
-docker-compose stop backend
-
-# 2. Restore database backup
-docker exec -i analytics-postgres psql -U analytics -d analyticsdb < backup.sql
-
-# 3. Revert code
-git revert <commit-hash>
-
-# 4. Redeploy
-docker-compose up -d
-```
-
-## Advanced Topics
-
-### Repeatable Migrations
-
-For views, functions, procedures:
-
-```sql
--- R__create_user_stats_view.sql
-CREATE OR REPLACE VIEW user_stats AS
-SELECT 
-    COUNT(*) as total_users,
-    COUNT(*) FILTER (WHERE active = true) as active_users
-FROM users;
-```
-
-### Callbacks
-
-```sql
--- beforeMigrate.sql
--- Runs before each migration
-SET statement_timeout = '60s';
-```
-
-### Multiple Databases
 
 ```properties
-# Profile-specific migrations
-spring.flyway.locations=classpath:db/migration,classpath:db/migration/${spring.profiles.active}
+# application-dev.properties
+spring.liquibase.contexts=dev,default
 ```
 
-## Monitoring
+### Labels
 
-### Flyway Actuator Endpoint
+Organize changesets by feature:
+
+```yaml
+changeSet:
+  id: 001-auth-feature
+  author: analytics-backend
+  labels: authentication,security
+```
+
+### Preconditions
+
+Only run if conditions met:
+
+```yaml
+changeSet:
+  id: 002-conditional-change
+  preConditions:
+    - tableExists:
+        tableName: users
+    - not:
+        columnExists:
+          tableName: users
+          columnName: active
+```
+
+### Custom Properties
+
+Define reusable properties:
+
+```yaml
+databaseChangeLog:
+  - property:
+      name: users.tablename
+      value: users
+  - changeSet:
+      id: 001-use-property
+      changes:
+        - createTable:
+            tableName: ${users.tablename}
+```
+
+## Liquibase CLI Commands
+
+If you have Liquibase CLI installed:
 
 ```bash
-# Check Flyway info via actuator
-curl http://localhost:8080/actuator/flyway
-```
+# Generate changelog from existing database
+liquibase generate-changelog
 
-### Migration Performance
+# Generate diff between databases
+liquibase diff
 
-```sql
-SELECT 
-    version,
-    description,
-    execution_time,
-    installed_on
-FROM flyway_schema_history
-ORDER BY execution_time DESC
-LIMIT 10;
+# Rollback last N changes
+liquibase rollback-count N
+
+# Rollback to date
+liquibase rollback-to-date 2026-01-01
+
+# Update SQL (see what will run)
+liquibase update-sql
+
+# Validate changelog
+liquibase validate
 ```
 
 ## Summary
 
-✅ **Migrations Configured**: Flyway tracks all schema changes
+✅ **Migrations Configured**: Liquibase tracks all schema changes
 ✅ **Version Control**: All migrations in Git
 ✅ **Automated**: Runs on application startup
-✅ **Safe**: Validates before applying
-✅ **Auditable**: Complete history in database
+✅ **Rollback Support**: Built-in rollback commands
+✅ **Flexible**: YAML, XML, JSON, or SQL formats
+✅ **Database Independent**: Works across different databases
 
 ### Quick Reference
 
 ```bash
-# Create migration
-touch src/main/resources/db/migration/V{X}__{description}.sql
+# Create changeset
+touch src/main/resources/db/changelog/changes/00X-description.yaml
 
 # Apply migrations
 docker-compose up -d
 
 # Check status
 docker exec -it analytics-postgres psql -U analytics -d analyticsdb \
-  -c "SELECT * FROM flyway_schema_history;"
+  -c "SELECT id, author, dateexecuted FROM DATABASECHANGELOG;"
 
 # View schema
 docker exec -it analytics-postgres psql -U analytics -d analyticsdb -c "\d+ users"
 ```
 
-Database migrations are now fully configured and ready to use! 🚀
+Database migrations are now fully configured with Liquibase! 🚀
