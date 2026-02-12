@@ -5,6 +5,7 @@ import io.github.danny270793.analytics.backend.application.dto.EventResponse;
 import io.github.danny270793.analytics.backend.application.dto.UpdateEventRequest;
 import io.github.danny270793.analytics.backend.application.service.EventService;
 import io.github.danny270793.analytics.backend.domain.model.Event;
+import io.github.danny270793.analytics.backend.infrastructure.persistence.adapter.EventEntityAdapter;
 import io.github.danny270793.analytics.backend.infrastructure.persistence.entity.EventEntity;
 import io.github.danny270793.analytics.backend.infrastructure.persistence.repository.EventJpaRepository;
 import org.slf4j.Logger;
@@ -22,19 +23,21 @@ public class EventServiceImpl implements EventService {
     private static final Logger log = LoggerFactory.getLogger(EventServiceImpl.class);
 
     private final EventJpaRepository eventJpaRepository;
+    private final EventEntityAdapter eventEntityAdapter;
 
-    public EventServiceImpl(EventJpaRepository eventJpaRepository) {
+    public EventServiceImpl(EventJpaRepository eventJpaRepository, EventEntityAdapter eventEntityAdapter) {
         this.eventJpaRepository = eventJpaRepository;
+        this.eventEntityAdapter = eventEntityAdapter;
     }
 
     @Override
     public EventResponse create(CreateEventRequest request) {
         log.info("Creating new event: type={}, from={}, to={}", request.getType(), request.getFrom(), request.getTo());
         Event event = new Event(null, request.getType(), request.getFrom(), request.getTo());
-        EventEntity eventEntity = EventEntity.fromDomain(event);
+        EventEntity eventEntity = eventEntityAdapter.toEntity(event);
         EventEntity savedEntity = eventJpaRepository.save(eventEntity);
         log.info("Event created successfully: id={}, type={}", savedEntity.getId(), savedEntity.getType());
-        return EventResponse.fromDomain(savedEntity.toDomain());
+        return EventResponse.fromDomain(eventEntityAdapter.toDomain(savedEntity));
     }
 
     @Override
@@ -47,7 +50,7 @@ public class EventServiceImpl implements EventService {
                     return new RuntimeException("Event not found with id: " + id);
                 });
         log.debug("Event found: type={}", eventEntity.getType());
-        return EventResponse.fromDomain(eventEntity.toDomain());
+        return EventResponse.fromDomain(eventEntityAdapter.toDomain(eventEntity));
     }
 
     @Override
@@ -55,7 +58,7 @@ public class EventServiceImpl implements EventService {
     public List<EventResponse> read() {
         log.debug("Fetching all events");
         List<EventResponse> events = eventJpaRepository.findAll().stream()
-                .map(entity -> EventResponse.fromDomain(entity.toDomain()))
+                .map(entity -> EventResponse.fromDomain(eventEntityAdapter.toDomain(entity)))
                 .collect(Collectors.toList());
         log.debug("Found {} events", events.size());
         return events;
@@ -85,7 +88,7 @@ public class EventServiceImpl implements EventService {
 
         EventEntity updatedEntity = eventJpaRepository.save(eventEntity);
         log.info("Event updated successfully: id={}", updatedEntity.getId());
-        return EventResponse.fromDomain(updatedEntity.toDomain());
+        return EventResponse.fromDomain(eventEntityAdapter.toDomain(updatedEntity));
     }
 
     @Override
