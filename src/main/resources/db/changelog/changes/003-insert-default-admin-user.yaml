@@ -17,7 +17,7 @@ databaseChangeLog:
                   value: admin@analytics.local
               - column:
                   name: password
-                  value: $2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+                  value: $2a$10$/QXYNR75o2QigcaC/jwA3OQ/U29159Fecf0ubjuwbTcZw/q3q0HJq
               - column:
                   name: created_at
                   valueComputed: CURRENT_TIMESTAMP
