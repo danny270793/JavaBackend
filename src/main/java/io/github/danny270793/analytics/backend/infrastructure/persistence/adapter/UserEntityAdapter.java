@@ -2,22 +2,29 @@ package io.github.danny270793.analytics.backend.infrastructure.persistence.adapt
 
 import io.github.danny270793.analytics.backend.domain.model.User;
 import io.github.danny270793.analytics.backend.infrastructure.persistence.entity.UserEntity;
-import org.springframework.stereotype.Component;
 
 /**
- * Adapter for converting between User domain model and UserEntity.
+ * Static utility adapter for converting between User domain model and UserEntity.
  * Follows the Adapter pattern to separate persistence concerns from domain logic.
+ * 
+ * This class is designed as a stateless utility and should not be instantiated.
  */
-@Component
-public class UserEntityAdapter {
+public final class UserEntityAdapter {
+
+    /**
+     * Private constructor to prevent instantiation.
+     */
+    private UserEntityAdapter() {
+        throw new UnsupportedOperationException("Utility class - cannot be instantiated");
+    }
 
     /**
      * Converts a domain User to a UserEntity for persistence.
      *
      * @param user the domain model
-     * @return the persistence entity
+     * @return the persistence entity, or null if input is null
      */
-    public UserEntity toEntity(User user) {
+    public static UserEntity toEntity(User user) {
         if (user == null) {
             return null;
         }
@@ -35,9 +42,9 @@ public class UserEntityAdapter {
      * Converts a UserEntity to a domain User.
      *
      * @param entity the persistence entity
-     * @return the domain model
+     * @return the domain model, or null if input is null
      */
-    public User toDomain(UserEntity entity) {
+    public static User toDomain(UserEntity entity) {
         if (entity == null) {
             return null;
         }
