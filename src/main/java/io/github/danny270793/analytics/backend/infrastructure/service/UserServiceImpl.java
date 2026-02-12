@@ -6,6 +6,7 @@ import io.github.danny270793.analytics.backend.application.dto.RegisterUserReque
 import io.github.danny270793.analytics.backend.application.dto.UserResponse;
 import io.github.danny270793.analytics.backend.application.service.UserService;
 import io.github.danny270793.analytics.backend.domain.model.User;
+import io.github.danny270793.analytics.backend.infrastructure.persistence.adapter.UserEntityAdapter;
 import io.github.danny270793.analytics.backend.infrastructure.persistence.entity.UserEntity;
 import io.github.danny270793.analytics.backend.infrastructure.persistence.repository.UserJpaRepository;
 import io.github.danny270793.analytics.backend.infrastructure.security.JwtUtil;
@@ -25,15 +26,17 @@ import java.util.stream.Collectors;
 @Transactional
 public class UserServiceImpl implements UserService {
     private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
-
+    
     private final UserJpaRepository userJpaRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final UserEntityAdapter userEntityAdapter;
 
-    public UserServiceImpl(UserJpaRepository userJpaRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+    public UserServiceImpl(UserJpaRepository userJpaRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, UserEntityAdapter userEntityAdapter) {
         this.userJpaRepository = userJpaRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.userEntityAdapter = userEntityAdapter;
     }
 
     @Override
@@ -62,12 +65,12 @@ public class UserServiceImpl implements UserService {
                 null
         );
 
-        UserEntity userEntity = UserEntity.fromDomain(user);
+        UserEntity userEntity = userEntityAdapter.toEntity(user);
         UserEntity savedEntity = userJpaRepository.save(userEntity);
         
         log.info("User registered successfully: id={}, username={}", savedEntity.getId(), savedEntity.getUsername());
 
-        return UserResponse.fromDomain(savedEntity.toDomain());
+        return UserResponse.fromDomain(userEntityAdapter.toDomain(savedEntity));
     }
 
     @Override
@@ -119,7 +122,7 @@ public class UserServiceImpl implements UserService {
                     return new RuntimeException("User not found with id: " + id);
                 });
         log.debug("User found: username={}", userEntity.getUsername());
-        return UserResponse.fromDomain(userEntity.toDomain());
+        return UserResponse.fromDomain(userEntityAdapter.toDomain(userEntity));
     }
 
     @Override
@@ -131,7 +134,7 @@ public class UserServiceImpl implements UserService {
                     log.warn("User not found with username: {}", username);
                     return new RuntimeException("User not found with username: " + username);
                 });
-        return UserResponse.fromDomain(userEntity.toDomain());
+        return UserResponse.fromDomain(userEntityAdapter.toDomain(userEntity));
     }
 
     @Override
@@ -139,7 +142,7 @@ public class UserServiceImpl implements UserService {
     public List<UserResponse> getAllUsers() {
         log.debug("Fetching all users");
         List<UserResponse> users = userJpaRepository.findAll().stream()
-                .map(entity -> UserResponse.fromDomain(entity.toDomain()))
+                .map(entity -> UserResponse.fromDomain(userEntityAdapter.toDomain(entity)))
                 .collect(Collectors.toList());
         log.debug("Found {} users", users.size());
         return users;
