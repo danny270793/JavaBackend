@@ -1,0 +1,57 @@
+# Build output
+build/
+target/
+*.jar
+*.war
+*.ear
+
+# Gradle
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.project
+.classpath
+.settings/
+*.swp
+*.bak
+*.tmp
+*.orig
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation (optional, include if you want docs in image)
+*.md
+!README.md
+
+# Docker files
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Logs
+logs/
+*.log
+
+# Test files
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment files
+.env
+.env.local
