@@ -4,6 +4,7 @@ import io.github.danny270793.analytics.backend.application.dto.request.CreateEve
 import io.github.danny270793.analytics.backend.application.dto.response.EventResponse;
 import io.github.danny270793.analytics.backend.application.dto.request.UpdateEventRequest;
 import io.github.danny270793.analytics.backend.application.service.EventService;
+import io.github.danny270793.analytics.backend.domain.exception.EventNotFoundException;
 import io.github.danny270793.analytics.backend.domain.model.Event;
 import io.github.danny270793.analytics.backend.infrastructure.persistence.adapter.EventEntityAdapter;
 import io.github.danny270793.analytics.backend.infrastructure.persistence.entity.EventEntity;
@@ -45,7 +46,7 @@ public class EventServiceImpl implements EventService {
         EventEntity eventEntity = eventJpaRepository.findById(id)
                 .orElseThrow(() -> {
                     log.warn("Event not found with id: {}", id);
-                    return new RuntimeException("Event not found with id: " + id);
+                    return new EventNotFoundException(id);
                 });
         log.debug("Event found: type={}", eventEntity.getType());
         return EventResponse.fromDomain(EventEntityAdapter.toDomain(eventEntity));
@@ -68,7 +69,7 @@ public class EventServiceImpl implements EventService {
         EventEntity eventEntity = eventJpaRepository.findById(id)
                 .orElseThrow(() -> {
                     log.warn("Update failed: Event not found with id: {}", id);
-                    return new RuntimeException("Event not found with id: " + id);
+                    return new EventNotFoundException(id);
                 });
 
         if (request.getType() != null) {
@@ -94,7 +95,7 @@ public class EventServiceImpl implements EventService {
         log.info("Attempting to delete event: id={}", id);
         if (!eventJpaRepository.existsById(id)) {
             log.warn("Delete failed: Event not found with id: {}", id);
-            throw new RuntimeException("Event not found with id: " + id);
+            throw new EventNotFoundException(id);
         }
         eventJpaRepository.deleteById(id);
         log.info("Event deleted successfully: id={}", id);
