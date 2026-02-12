@@ -1,8 +1,8 @@
 package io.github.danny270793.analytics.backend.infrastructure.service;
 
-import io.github.danny270793.analytics.backend.application.dto.CreateEventRequest;
-import io.github.danny270793.analytics.backend.application.dto.EventResponse;
-import io.github.danny270793.analytics.backend.application.dto.UpdateEventRequest;
+import io.github.danny270793.analytics.backend.application.dto.request.CreateEventRequest;
+import io.github.danny270793.analytics.backend.application.dto.response.EventResponse;
+import io.github.danny270793.analytics.backend.application.dto.request.UpdateEventRequest;
 import io.github.danny270793.analytics.backend.application.service.EventService;
 import io.github.danny270793.analytics.backend.domain.model.Event;
 import io.github.danny270793.analytics.backend.infrastructure.persistence.adapter.EventEntityAdapter;
@@ -23,26 +23,24 @@ public class EventServiceImpl implements EventService {
     private static final Logger log = LoggerFactory.getLogger(EventServiceImpl.class);
 
     private final EventJpaRepository eventJpaRepository;
-    private final EventEntityAdapter eventEntityAdapter;
 
-    public EventServiceImpl(EventJpaRepository eventJpaRepository, EventEntityAdapter eventEntityAdapter) {
+    public EventServiceImpl(EventJpaRepository eventJpaRepository) {
         this.eventJpaRepository = eventJpaRepository;
-        this.eventEntityAdapter = eventEntityAdapter;
     }
 
     @Override
-    public EventResponse create(CreateEventRequest request) {
+    public EventResponse createEvent(CreateEventRequest request) {
         log.info("Creating new event: type={}, from={}, to={}", request.getType(), request.getFrom(), request.getTo());
         Event event = new Event(null, request.getType(), request.getFrom(), request.getTo());
-        EventEntity eventEntity = eventEntityAdapter.toEntity(event);
+        EventEntity eventEntity = EventEntityAdapter.toEntity(event);
         EventEntity savedEntity = eventJpaRepository.save(eventEntity);
         log.info("Event created successfully: id={}, type={}", savedEntity.getId(), savedEntity.getType());
-        return EventResponse.fromDomain(eventEntityAdapter.toDomain(savedEntity));
+        return EventResponse.fromDomain(EventEntityAdapter.toDomain(savedEntity));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public EventResponse read(UUID id) {
+    public EventResponse findEventById(UUID id) {
         log.debug("Fetching event by id: {}", id);
         EventEntity eventEntity = eventJpaRepository.findById(id)
                 .orElseThrow(() -> {
@@ -50,22 +48,22 @@ public class EventServiceImpl implements EventService {
                     return new RuntimeException("Event not found with id: " + id);
                 });
         log.debug("Event found: type={}", eventEntity.getType());
-        return EventResponse.fromDomain(eventEntityAdapter.toDomain(eventEntity));
+        return EventResponse.fromDomain(EventEntityAdapter.toDomain(eventEntity));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<EventResponse> read() {
+    public List<EventResponse> findAllEvents() {
         log.debug("Fetching all events");
         List<EventResponse> events = eventJpaRepository.findAll().stream()
-                .map(entity -> EventResponse.fromDomain(eventEntityAdapter.toDomain(entity)))
+                .map(entity -> EventResponse.fromDomain(EventEntityAdapter.toDomain(entity)))
                 .collect(Collectors.toList());
         log.debug("Found {} events", events.size());
         return events;
     }
 
     @Override
-    public EventResponse update(UUID id, UpdateEventRequest request) {
+    public EventResponse updateEvent(UUID id, UpdateEventRequest request) {
         log.info("Updating event: id={}", id);
         EventEntity eventEntity = eventJpaRepository.findById(id)
                 .orElseThrow(() -> {
@@ -88,11 +86,11 @@ public class EventServiceImpl implements EventService {
 
         EventEntity updatedEntity = eventJpaRepository.save(eventEntity);
         log.info("Event updated successfully: id={}", updatedEntity.getId());
-        return EventResponse.fromDomain(eventEntityAdapter.toDomain(updatedEntity));
+        return EventResponse.fromDomain(EventEntityAdapter.toDomain(updatedEntity));
     }
 
     @Override
-    public void delete(UUID id) {
+    public void deleteEvent(UUID id) {
         log.info("Attempting to delete event: id={}", id);
         if (!eventJpaRepository.existsById(id)) {
             log.warn("Delete failed: Event not found with id: {}", id);
