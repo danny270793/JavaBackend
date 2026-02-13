@@ -1,0 +1,47 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-create-events-table
+      author: analytics-backend
+      changes:
+        - createTable:
+            tableName: events
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: type
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: from_value
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: to_value
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+        - addCheckConstraint:
+            constraintName: chk_event_type
+            tableName: events
+            checkCondition: "type IN ('NAVIGATION', 'ACTION')"
+        - createIndex:
+            indexName: idx_events_type
+            tableName: events
+            columns:
+              - column:
+                  name: type
+      rollback:
+        - dropIndex:
+            indexName: idx_events_type
+            tableName: events
+        - sql:
+            sql: "ALTER TABLE events DROP CONSTRAINT IF EXISTS chk_event_type"
+        - dropTable:
+            tableName: events
