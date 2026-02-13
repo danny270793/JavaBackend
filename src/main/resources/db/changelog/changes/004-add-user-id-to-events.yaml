@@ -1,0 +1,37 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-add-user-id-to-events
+      author: analytics-backend
+      changes:
+        - addColumn:
+            tableName: events
+            columns:
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: events
+            baseColumnNames: user_id
+            constraintName: fk_events_user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - createIndex:
+            indexName: idx_events_user_id
+            tableName: events
+            columns:
+              - column:
+                  name: user_id
+      rollback:
+        - dropIndex:
+            indexName: idx_events_user_id
+            tableName: events
+        - dropForeignKeyConstraint:
+            baseTableName: events
+            constraintName: fk_events_user_id
+        - dropColumn:
+            tableName: events
+            columnName: user_id
+      comment: "Add user_id column to events table to track which user created each event"
