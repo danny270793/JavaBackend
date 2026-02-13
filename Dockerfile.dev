@@ -1,0 +1,27 @@
+# Development Dockerfile with hot reload support
+FROM gradle:8.5-jdk17
+
+WORKDIR /app
+
+# Install wget for healthcheck
+USER root
+RUN apt-get update && apt-get install -y wget && rm -rf /var/lib/apt/lists/*
+
+# Copy gradle files
+COPY build.gradle settings.gradle gradlew ./
+COPY gradle ./gradle
+
+# Download dependencies (cached layer)
+RUN gradle dependencies --no-daemon || true
+
+# Copy source code
+COPY src ./src
+
+# Make gradlew executable
+RUN chmod +x gradlew
+
+# Expose application and debug ports
+EXPOSE 8080 5005
+
+# Run with bootRun for hot reload (Spring Boot DevTools)
+CMD ["./gradlew", "bootRun", "--no-daemon", "--args='--spring.profiles.active=dev'"]
