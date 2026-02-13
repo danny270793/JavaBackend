@@ -2,12 +2,14 @@ package io.github.danny270793.analytics.backend.infrastructure.persistence.entit
 
 import io.github.danny270793.analytics.backend.domain.model.EventType;
 import jakarta.persistence.*;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.UUID;
 
 @Entity
 @Table(name = "events")
-public class EventEntity {
+@SQLRestriction("deleted_at IS NULL")
+public class EventEntity extends AuditableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;

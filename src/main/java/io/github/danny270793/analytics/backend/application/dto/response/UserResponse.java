@@ -10,17 +10,23 @@ public class UserResponse {
     private String username;
     private String email;
     private LocalDateTime createdAt;
+    private UUID createdBy;
     private LocalDateTime updatedAt;
+    private UUID updatedBy;
 
     public UserResponse() {
     }
 
-    public UserResponse(UUID id, String username, String email, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public UserResponse(UUID id, String username, String email, 
+                       LocalDateTime createdAt, UUID createdBy, 
+                       LocalDateTime updatedAt, UUID updatedBy) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.createdAt = createdAt;
+        this.createdBy = createdBy;
         this.updatedAt = updatedAt;
+        this.updatedBy = updatedBy;
     }
 
     public static UserResponse fromDomain(User user) {
@@ -29,7 +35,9 @@ public class UserResponse {
                 user.getUsername(),
                 user.getEmail(),
                 user.getCreatedAt(),
-                user.getUpdatedAt()
+                user.getCreatedBy(),
+                user.getUpdatedAt(),
+                user.getUpdatedBy()
         );
     }
 
@@ -71,5 +79,21 @@ public class UserResponse {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public UUID getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(UUID createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public UUID getUpdatedBy() {
+        return updatedBy;
+    }
+
+    public void setUpdatedBy(UUID updatedBy) {
+        this.updatedBy = updatedBy;
     }
 }

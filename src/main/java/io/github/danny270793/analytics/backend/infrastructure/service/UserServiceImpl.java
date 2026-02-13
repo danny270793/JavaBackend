@@ -62,9 +62,7 @@ public class UserServiceImpl implements UserService {
                 null,
                 request.getUsername(),
                 request.getEmail(),
-                passwordEncoder.encode(request.getPassword()),
-                null,
-                null
+                passwordEncoder.encode(request.getPassword())
         );
 
         UserEntity userEntity = UserEntityAdapter.toEntity(user);
@@ -155,12 +153,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUser(UUID id) {
-        log.info("Attempting to delete user: id={}", id);
-        if (!userJpaRepository.existsById(id)) {
-            log.warn("Delete failed: User not found with id: {}", id);
-            throw new UserNotFoundException(id);
-        }
-        userJpaRepository.deleteById(id);
-        log.info("User deleted successfully: id={}", id);
+        log.info("Attempting to soft delete user: id={}", id);
+        
+        UserEntity userEntity = userJpaRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Delete failed: User not found with id: {}", id);
+                    return new UserNotFoundException(id);
+                });
+        
+        userEntity.markAsDeleted(id);
+        userJpaRepository.save(userEntity);
+        
+        log.info("User soft deleted successfully: id={}, deletedBy={}", id, id);
     }
 }

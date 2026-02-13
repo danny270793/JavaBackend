@@ -9,18 +9,36 @@ public class User {
     private String email;
     private String password;
     private LocalDateTime createdAt;
+    private UUID createdBy;
     private LocalDateTime updatedAt;
+    private UUID updatedBy;
 
     public User() {
     }
 
-    public User(UUID id, String username, String email, String password, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    /**
+     * Constructor for creating new users (audit fields will be populated by JPA auditing).
+     */
+    public User(UUID id, String username, String email, String password) {
+        this.id = id;
+        this.username = username;
+        this.email = email;
+        this.password = password;
+    }
+
+    /**
+     * Full constructor including audit fields (used when mapping from UserEntity).
+     */
+    public User(UUID id, String username, String email, String password, 
+                LocalDateTime createdAt, UUID createdBy, LocalDateTime updatedAt, UUID updatedBy) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.password = password;
         this.createdAt = createdAt;
+        this.createdBy = createdBy;
         this.updatedAt = updatedAt;
+        this.updatedBy = updatedBy;
     }
 
     public UUID getId() {
@@ -69,5 +87,21 @@ public class User {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public UUID getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(UUID createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public UUID getUpdatedBy() {
+        return updatedBy;
+    }
+
+    public void setUpdatedBy(UUID updatedBy) {
+        this.updatedBy = updatedBy;
     }
 }

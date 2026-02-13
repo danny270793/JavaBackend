@@ -1,0 +1,107 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-add-audit-fields-to-events
+      author: dvaca
+      changes:
+        # Add created_at timestamp
+        - addColumn:
+            tableName: events
+            columns:
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+
+        # Add created_by field
+        - addColumn:
+            tableName: events
+            columns:
+              - column:
+                  name: created_by
+                  type: UUID
+                  constraints:
+                    nullable: true
+
+        # Add updated_at timestamp
+        - addColumn:
+            tableName: events
+            columns:
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+
+        # Add updated_by field
+        - addColumn:
+            tableName: events
+            columns:
+              - column:
+                  name: updated_by
+                  type: UUID
+                  constraints:
+                    nullable: true
+
+        # Add deleted_at field for soft delete
+        - addColumn:
+            tableName: events
+            columns:
+              - column:
+                  name: deleted_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: true
+
+        # Add deleted_by field for soft delete
+        - addColumn:
+            tableName: events
+            columns:
+              - column:
+                  name: deleted_by
+                  type: UUID
+                  constraints:
+                    nullable: true
+
+        # Add index on deleted_at for soft delete queries
+        - createIndex:
+            indexName: idx_events_deleted_at
+            tableName: events
+            columns:
+              - column:
+                  name: deleted_at
+
+        # Add index on created_at for temporal queries
+        - createIndex:
+            indexName: idx_events_created_at
+            tableName: events
+            columns:
+              - column:
+                  name: created_at
+      rollback:
+        - dropIndex:
+            indexName: idx_events_created_at
+            tableName: events
+        - dropIndex:
+            indexName: idx_events_deleted_at
+            tableName: events
+        - dropColumn:
+            tableName: events
+            columnName: deleted_by
+        - dropColumn:
+            tableName: events
+            columnName: deleted_at
+        - dropColumn:
+            tableName: events
+            columnName: updated_by
+        - dropColumn:
+            tableName: events
+            columnName: updated_at
+        - dropColumn:
+            tableName: events
+            columnName: created_by
+        - dropColumn:
+            tableName: events
+            columnName: created_at
