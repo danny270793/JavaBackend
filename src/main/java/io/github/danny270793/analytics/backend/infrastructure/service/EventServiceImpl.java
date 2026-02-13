@@ -44,7 +44,8 @@ public class EventServiceImpl implements EventService {
         UUID userId = getCurrentUserId();
         log.debug("Creating event for user: {}", userId);
         
-        Event event = new Event(null, request.getType(), request.getFrom(), request.getTo(), userId);
+        Event event = new Event(null, request.getType(), request.getFrom(), request.getTo(), userId, 
+                               null, null, null, null);
         EventEntity eventEntity = EventEntityAdapter.toEntity(event);
         EventEntity savedEntity = eventJpaRepository.save(eventEntity);
         log.info("Event created successfully: id={}, type={}, userId={}", savedEntity.getId(), savedEntity.getType(), savedEntity.getUserId());
