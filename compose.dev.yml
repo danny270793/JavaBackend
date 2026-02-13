@@ -1,5 +1,5 @@
 services:
-  backend-dev:
+  backend:
     build:
       context: .
       dockerfile: dockerfile.dev
