@@ -52,7 +52,11 @@ public final class EventEntityAdapter {
                 entity.getType(),
                 entity.getFrom(),
                 entity.getTo(),
-                entity.getUserId()
+                entity.getUserId(),
+                entity.getCreatedAt(),
+                entity.getCreatedBy(),
+                entity.getUpdatedAt(),
+                entity.getUpdatedBy()
         );
     }
 }
