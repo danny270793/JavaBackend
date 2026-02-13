@@ -1,6 +1,9 @@
 plugins {
+	// java compilation tasks like: compileJava, test, jar, build
 	id 'java'
+	// spring boot tasks like: bootRun, bootJar, bootWar, bootTest, bootTestReport
 	id 'org.springframework.boot' version '4.0.2'
+	// spring dependency management tasks like: resolve, clean, verify, compileJava, compileTestJava, processResources, processTestResources, testCompile, testRuntime, bootRun, bootJar, bootWar, bootTest, bootTestReport
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -10,6 +13,7 @@ description = 'Demo project for Spring Boot'
 
 java {
 	toolchain {
+		// this must be build with java 17
 		languageVersion = JavaLanguageVersion.of(17)
 	}
 }
@@ -19,23 +23,62 @@ repositories {
 }
 
 dependencies {
+	/*
+	implementation
+		to libraries directly used on my source code, that must be available on runtime
+			compile + runtime
+			included on jar
+	runtimeOnly
+		to libraries loaded dynamically on runtime, that must be available on runtime
+			runtime
+			included on jar
+	developmentOnly
+		development tools that shoulden go to production
+			compile + runtime(dev)
+			not included on jar
+	testImplementation
+		to libraries used for testing, directly used on my source code
+			compile + runtime(test)
+			not included on jar
+	testRuntimeOnly
+		to libraries used for testing loaded dynamically, that must be available on test runtime
+			runtime(test)
+			not included on jar
+	*/
+
+	// hot reload support
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
+	// controllers, tomcat, json serializer/deserializer: @RestController, @GetMapping
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	// spring data jpa, hibernate orm, transactions: @Entity, JpaRepository
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	// hibernate/jakarta validations: @Valid, @NotNull, @Email
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	// bcrypt, authentication, authorization
 	implementation 'org.springframework.boot:spring-boot-starter-security'
+	// health endpoints
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	// database migrations
 	implementation 'org.springframework.boot:spring-boot-starter-liquibase'
+	// interface fot jwt
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
+	// jwt implementation
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
+	// jwt jackson serializer/deserializer
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
+	// postgresql
 	runtimeOnly 'org.postgresql:postgresql'
+	// h2 database for testing
 	developmentOnly 'com.h2database:h2'
+	// h2 database for testing
 	testRuntimeOnly 'com.h2database:h2'
+	// testing tools for spring boot
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	// junit 5 test runner
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
+	// to task called test, use junit platform launcher
 	useJUnitPlatform()
 }
