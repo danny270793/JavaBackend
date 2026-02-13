@@ -7,15 +7,17 @@ public class Event {
     private EventType type;
     private String from;
     private String to;
+    private UUID userId;
 
     public Event() {
     }
 
-    public Event(UUID id, EventType type, String from, String to) {
+    public Event(UUID id, EventType type, String from, String to, UUID userId) {
         this.id = id;
         this.type = type;
         this.from = from;
         this.to = to;
+        this.userId = userId;
     }
 
     public UUID getId() {
@@ -48,5 +50,13 @@ public class Event {
 
     public void setTo(String to) {
         this.to = to;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
     }
 }

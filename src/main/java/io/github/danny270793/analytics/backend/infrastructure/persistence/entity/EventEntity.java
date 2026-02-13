@@ -22,14 +22,18 @@ public class EventEntity {
     @Column(nullable = false, name = "to_value")
     private String to;
 
+    @Column(nullable = false, name = "user_id")
+    private UUID userId;
+
     public EventEntity() {
     }
 
-    public EventEntity(UUID id, EventType type, String from, String to) {
+    public EventEntity(UUID id, EventType type, String from, String to, UUID userId) {
         this.id = id;
         this.type = type;
         this.from = from;
         this.to = to;
+        this.userId = userId;
     }
 
     public UUID getId() {
@@ -62,5 +66,13 @@ public class EventEntity {
 
     public void setTo(String to) {
         this.to = to;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
     }
 }

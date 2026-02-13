@@ -10,15 +10,17 @@ public class EventResponse {
     private EventType type;
     private String from;
     private String to;
+    private UUID userId;
 
     public EventResponse() {
     }
 
-    public EventResponse(UUID id, EventType type, String from, String to) {
+    public EventResponse(UUID id, EventType type, String from, String to, UUID userId) {
         this.id = id;
         this.type = type;
         this.from = from;
         this.to = to;
+        this.userId = userId;
     }
 
     public static EventResponse fromDomain(Event event) {
@@ -26,7 +28,8 @@ public class EventResponse {
                 event.getId(),
                 event.getType(),
                 event.getFrom(),
-                event.getTo()
+                event.getTo(),
+                event.getUserId()
         );
     }
 
@@ -60,5 +63,13 @@ public class EventResponse {
 
     public void setTo(String to) {
         this.to = to;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
     }
 }
