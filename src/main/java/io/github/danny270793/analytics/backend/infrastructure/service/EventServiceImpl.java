@@ -14,14 +14,14 @@ import io.github.danny270793.analytics.backend.infrastructure.persistence.reposi
 import io.github.danny270793.analytics.backend.infrastructure.persistence.repository.UserJpaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -97,18 +97,20 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<EventResponse> findAllEvents() {
-        log.debug("Fetching all events for current user");
+    public Page<EventResponse> findAllEvents(Pageable pageable) {
+        log.debug("Fetching paginated events for current user: page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
         UUID currentUserId = getCurrentUserId();
         
-        // Only return events that belong to the current user
-        List<EventResponse> events = eventJpaRepository.findAll().stream()
-                .filter(entity -> entity.getUserId().equals(currentUserId))
-                .map(entity -> EventResponse.fromDomain(EventEntityAdapter.toDomain(entity)))
-                .collect(Collectors.toList());
+        // Use repository pagination - only return events that belong to the current user
+        Page<EventEntity> eventPage = eventJpaRepository.findByUserId(currentUserId, pageable);
         
-        log.debug("Found {} events for user: {}", events.size(), currentUserId);
-        return events;
+        log.debug("Found {} events (page {} of {}) for user: {}", 
+            eventPage.getNumberOfElements(), 
+            eventPage.getNumber() + 1, 
+            eventPage.getTotalPages(), 
+            currentUserId);
+        
+        return eventPage.map(entity -> EventResponse.fromDomain(EventEntityAdapter.toDomain(entity)));
     }
 
     @Override
