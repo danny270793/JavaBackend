@@ -5,7 +5,7 @@ Complete guide to building, running, and deploying the Analytics Backend using D
 ## Overview
 
 The project is fully dockerized with:
-- **Multi-stage Dockerfile** - Optimized build and runtime layers
+- **Multi-stage dockerfile** - Optimized build and runtime layers
 - **Docker Compose** - Easy orchestration
 - **Health Checks** - Container health monitoring
 - **Non-root User** - Security best practices
@@ -46,7 +46,7 @@ docker run -d \
 
 ### Multi-Stage Build
 
-The Dockerfile uses a two-stage build process:
+The dockerfile uses a two-stage build process:
 
 #### Stage 1: Builder
 - Base: `gradle:8.5-jdk17`
@@ -206,7 +206,7 @@ docker system prune -a
 
 ### Container Health Check
 
-The Dockerfile includes a health check:
+The dockerfile includes a health check:
 
 ```dockerfile
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
@@ -290,7 +290,7 @@ curl http://localhost:8080/actuator/health
 
 1. **Non-root User** ✅
    - Container runs as `spring:spring` user
-   - Implemented in Dockerfile
+   - Implemented in dockerfile
 
 2. **Secrets Management**
    ```bash
