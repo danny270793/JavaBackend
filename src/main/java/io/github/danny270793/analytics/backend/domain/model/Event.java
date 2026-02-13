@@ -1,5 +1,6 @@
 package io.github.danny270793.analytics.backend.domain.model;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class Event {
@@ -8,16 +9,25 @@ public class Event {
     private String from;
     private String to;
     private UUID userId;
+    private LocalDateTime createdAt;
+    private UUID createdBy;
+    private LocalDateTime updatedAt;
+    private UUID updatedBy;
 
     public Event() {
     }
 
-    public Event(UUID id, EventType type, String from, String to, UUID userId) {
+    public Event(UUID id, EventType type, String from, String to, UUID userId, 
+                 LocalDateTime createdAt, UUID createdBy, LocalDateTime updatedAt, UUID updatedBy) {
         this.id = id;
         this.type = type;
         this.from = from;
         this.to = to;
         this.userId = userId;
+        this.createdAt = createdAt;
+        this.createdBy = createdBy;
+        this.updatedAt = updatedAt;
+        this.updatedBy = updatedBy;
     }
 
     public UUID getId() {
@@ -58,5 +68,37 @@ public class Event {
 
     public void setUserId(UUID userId) {
         this.userId = userId;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public UUID getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(UUID createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public UUID getUpdatedBy() {
+        return updatedBy;
+    }
+
+    public void setUpdatedBy(UUID updatedBy) {
+        this.updatedBy = updatedBy;
     }
 }
