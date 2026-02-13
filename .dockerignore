@@ -39,7 +39,8 @@ Thumbs.db
 !README.md
 
 # Docker files
-Dockerfile
+Dockerfile.dev
+Dockerfile.prod
 .dockerignore
 docker-compose*.yml
 
