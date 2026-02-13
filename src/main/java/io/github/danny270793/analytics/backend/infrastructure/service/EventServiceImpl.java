@@ -5,6 +5,7 @@ import io.github.danny270793.analytics.backend.application.dto.response.EventRes
 import io.github.danny270793.analytics.backend.application.dto.request.UpdateEventRequest;
 import io.github.danny270793.analytics.backend.application.service.EventService;
 import io.github.danny270793.analytics.backend.domain.exception.EventNotFoundException;
+import io.github.danny270793.analytics.backend.domain.exception.UnauthorizedAccessException;
 import io.github.danny270793.analytics.backend.domain.model.Event;
 import io.github.danny270793.analytics.backend.infrastructure.persistence.adapter.EventEntityAdapter;
 import io.github.danny270793.analytics.backend.infrastructure.persistence.entity.EventEntity;
@@ -79,34 +80,50 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     public EventResponse findEventById(UUID id) {
         log.debug("Fetching event by id: {}", id);
+        UUID currentUserId = getCurrentUserId();
+        
         EventEntity eventEntity = eventJpaRepository.findById(id)
                 .orElseThrow(() -> {
                     log.warn("Event not found with id: {}", id);
                     return new EventNotFoundException(id);
                 });
-        log.debug("Event found: type={}", eventEntity.getType());
+        
+        // Check if the event belongs to the current user
+        verifyEventOwnership(eventEntity, currentUserId);
+        
+        log.debug("Event found: type={}, userId={}", eventEntity.getType(), eventEntity.getUserId());
         return EventResponse.fromDomain(EventEntityAdapter.toDomain(eventEntity));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<EventResponse> findAllEvents() {
-        log.debug("Fetching all events");
+        log.debug("Fetching all events for current user");
+        UUID currentUserId = getCurrentUserId();
+        
+        // Only return events that belong to the current user
         List<EventResponse> events = eventJpaRepository.findAll().stream()
+                .filter(entity -> entity.getUserId().equals(currentUserId))
                 .map(entity -> EventResponse.fromDomain(EventEntityAdapter.toDomain(entity)))
                 .collect(Collectors.toList());
-        log.debug("Found {} events", events.size());
+        
+        log.debug("Found {} events for user: {}", events.size(), currentUserId);
         return events;
     }
 
     @Override
     public EventResponse updateEvent(UUID id, UpdateEventRequest request) {
         log.info("Updating event: id={}", id);
+        UUID currentUserId = getCurrentUserId();
+        
         EventEntity eventEntity = eventJpaRepository.findById(id)
                 .orElseThrow(() -> {
                     log.warn("Update failed: Event not found with id: {}", id);
                     return new EventNotFoundException(id);
                 });
+        
+        // Check if the event belongs to the current user
+        verifyEventOwnership(eventEntity, currentUserId);
 
         if (request.getType() != null) {
             log.debug("Updating event type: {} -> {}", eventEntity.getType(), request.getType());
@@ -122,18 +139,41 @@ public class EventServiceImpl implements EventService {
         }
 
         EventEntity updatedEntity = eventJpaRepository.save(eventEntity);
-        log.info("Event updated successfully: id={}", updatedEntity.getId());
+        log.info("Event updated successfully: id={}, userId={}", updatedEntity.getId(), updatedEntity.getUserId());
         return EventResponse.fromDomain(EventEntityAdapter.toDomain(updatedEntity));
     }
 
     @Override
     public void deleteEvent(UUID id) {
         log.info("Attempting to delete event: id={}", id);
-        if (!eventJpaRepository.existsById(id)) {
-            log.warn("Delete failed: Event not found with id: {}", id);
-            throw new EventNotFoundException(id);
-        }
+        UUID currentUserId = getCurrentUserId();
+        
+        EventEntity eventEntity = eventJpaRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Delete failed: Event not found with id: {}", id);
+                    return new EventNotFoundException(id);
+                });
+        
+        // Check if the event belongs to the current user
+        verifyEventOwnership(eventEntity, currentUserId);
+        
         eventJpaRepository.deleteById(id);
-        log.info("Event deleted successfully: id={}", id);
+        log.info("Event deleted successfully: id={}, userId={}", id, currentUserId);
+    }
+
+    /**
+     * Verifies that the event belongs to the specified user.
+     *
+     * @param eventEntity the event to check
+     * @param userId the user ID to verify against
+     * @throws UnauthorizedAccessException if the event does not belong to the user
+     */
+    private void verifyEventOwnership(EventEntity eventEntity, UUID userId) {
+        if (!eventEntity.getUserId().equals(userId)) {
+            log.warn("Unauthorized access attempt: user {} tried to access event {} owned by user {}", 
+                    userId, eventEntity.getId(), eventEntity.getUserId());
+            throw new UnauthorizedAccessException(eventEntity.getId(), userId);
+        }
+        log.debug("Event ownership verified: eventId={}, userId={}", eventEntity.getId(), userId);
     }
 }
