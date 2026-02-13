@@ -1,4 +1,4 @@
-package io.github.danny270793.analytics.backend.application.dto;
+package io.github.danny270793.analytics.backend.application.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 

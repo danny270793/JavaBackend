@@ -1,22 +1,16 @@
-package io.github.danny270793.analytics.backend.application.dto;
+package io.github.danny270793.analytics.backend.application.dto.request;
 
 import io.github.danny270793.analytics.backend.domain.model.EventType;
-import jakarta.validation.constraints.NotNull;
 
-public class CreateEventRequest {
-    @NotNull(message = "Type is required")
+public class UpdateEventRequest {
     private EventType type;
-
-    @NotNull(message = "From is required")
     private String from;
-
-    @NotNull(message = "To is required")
     private String to;
 
-    public CreateEventRequest() {
+    public UpdateEventRequest() {
     }
 
-    public CreateEventRequest(EventType type, String from, String to) {
+    public UpdateEventRequest(EventType type, String from, String to) {
         this.type = type;
         this.from = from;
         this.to = to;

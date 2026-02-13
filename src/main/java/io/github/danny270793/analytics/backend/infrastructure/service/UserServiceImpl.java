@@ -1,11 +1,16 @@
 package io.github.danny270793.analytics.backend.infrastructure.service;
 
-import io.github.danny270793.analytics.backend.application.dto.LoginRequest;
-import io.github.danny270793.analytics.backend.application.dto.LoginResponse;
-import io.github.danny270793.analytics.backend.application.dto.RegisterUserRequest;
-import io.github.danny270793.analytics.backend.application.dto.UserResponse;
+import io.github.danny270793.analytics.backend.application.dto.request.LoginRequest;
+import io.github.danny270793.analytics.backend.application.dto.response.LoginResponse;
+import io.github.danny270793.analytics.backend.application.dto.request.RegisterUserRequest;
+import io.github.danny270793.analytics.backend.application.dto.response.UserResponse;
 import io.github.danny270793.analytics.backend.application.service.UserService;
+import io.github.danny270793.analytics.backend.domain.exception.EmailAlreadyExistsException;
+import io.github.danny270793.analytics.backend.domain.exception.InvalidCredentialsException;
+import io.github.danny270793.analytics.backend.domain.exception.UserNotFoundException;
+import io.github.danny270793.analytics.backend.domain.exception.UsernameAlreadyExistsException;
 import io.github.danny270793.analytics.backend.domain.model.User;
+import io.github.danny270793.analytics.backend.infrastructure.persistence.adapter.UserEntityAdapter;
 import io.github.danny270793.analytics.backend.infrastructure.persistence.entity.UserEntity;
 import io.github.danny270793.analytics.backend.infrastructure.persistence.repository.UserJpaRepository;
 import io.github.danny270793.analytics.backend.infrastructure.security.JwtUtil;
@@ -25,7 +30,7 @@ import java.util.stream.Collectors;
 @Transactional
 public class UserServiceImpl implements UserService {
     private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
-
+    
     private final UserJpaRepository userJpaRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
@@ -43,13 +48,13 @@ public class UserServiceImpl implements UserService {
         // Check if username already exists
         if (userJpaRepository.existsByUsername(request.getUsername())) {
             log.warn("Registration failed: Username already exists - {}", request.getUsername());
-            throw new RuntimeException("Username already exists");
+            throw new UsernameAlreadyExistsException(request.getUsername());
         }
 
         // Check if email already exists
         if (userJpaRepository.existsByEmail(request.getEmail())) {
             log.warn("Registration failed: Email already exists - {}", request.getEmail());
-            throw new RuntimeException("Email already exists");
+            throw new EmailAlreadyExistsException(request.getEmail());
         }
 
         // Create user with encoded password
@@ -62,12 +67,12 @@ public class UserServiceImpl implements UserService {
                 null
         );
 
-        UserEntity userEntity = UserEntity.fromDomain(user);
+        UserEntity userEntity = UserEntityAdapter.toEntity(user);
         UserEntity savedEntity = userJpaRepository.save(userEntity);
         
         log.info("User registered successfully: id={}, username={}", savedEntity.getId(), savedEntity.getUsername());
 
-        return UserResponse.fromDomain(savedEntity.toDomain());
+        return UserResponse.fromDomain(UserEntityAdapter.toDomain(savedEntity));
     }
 
     @Override
@@ -77,7 +82,7 @@ public class UserServiceImpl implements UserService {
         UserEntity userEntity = userJpaRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> {
                     log.warn("Login failed: User not found - username={}", request.getUsername());
-                    return new RuntimeException("Invalid username or password");
+                    return new InvalidCredentialsException(request.getUsername());
                 });
 
         log.debug("User found in database: id={}, username={}", userEntity.getId(), userEntity.getUsername());
@@ -85,7 +90,7 @@ public class UserServiceImpl implements UserService {
         // Verify password
         if (!passwordEncoder.matches(request.getPassword(), userEntity.getPassword())) {
             log.warn("Login failed: Invalid password for user - username={}", request.getUsername());
-            throw new RuntimeException("Invalid username or password");
+            throw new InvalidCredentialsException(request.getUsername());
         }
 
         log.debug("Password verified successfully for user: {}", request.getUsername());
@@ -116,10 +121,10 @@ public class UserServiceImpl implements UserService {
         UserEntity userEntity = userJpaRepository.findById(id)
                 .orElseThrow(() -> {
                     log.warn("User not found with id: {}", id);
-                    return new RuntimeException("User not found with id: " + id);
+                    return new UserNotFoundException(id);
                 });
         log.debug("User found: username={}", userEntity.getUsername());
-        return UserResponse.fromDomain(userEntity.toDomain());
+        return UserResponse.fromDomain(UserEntityAdapter.toDomain(userEntity));
     }
 
     @Override
@@ -129,9 +134,9 @@ public class UserServiceImpl implements UserService {
         UserEntity userEntity = userJpaRepository.findByUsername(username)
                 .orElseThrow(() -> {
                     log.warn("User not found with username: {}", username);
-                    return new RuntimeException("User not found with username: " + username);
+                    return new UserNotFoundException(username);
                 });
-        return UserResponse.fromDomain(userEntity.toDomain());
+        return UserResponse.fromDomain(UserEntityAdapter.toDomain(userEntity));
     }
 
     @Override
@@ -139,7 +144,7 @@ public class UserServiceImpl implements UserService {
     public List<UserResponse> getAllUsers() {
         log.debug("Fetching all users");
         List<UserResponse> users = userJpaRepository.findAll().stream()
-                .map(entity -> UserResponse.fromDomain(entity.toDomain()))
+                .map(entity -> UserResponse.fromDomain(UserEntityAdapter.toDomain(entity)))
                 .collect(Collectors.toList());
         log.debug("Found {} users", users.size());
         return users;
@@ -150,7 +155,7 @@ public class UserServiceImpl implements UserService {
         log.info("Attempting to delete user: id={}", id);
         if (!userJpaRepository.existsById(id)) {
             log.warn("Delete failed: User not found with id: {}", id);
-            throw new RuntimeException("User not found with id: " + id);
+            throw new UserNotFoundException(id);
         }
         userJpaRepository.deleteById(id);
         log.info("User deleted successfully: id={}", id);

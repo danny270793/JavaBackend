@@ -1,9 +1,9 @@
 package io.github.danny270793.analytics.backend.application.service;
 
-import io.github.danny270793.analytics.backend.application.dto.LoginRequest;
-import io.github.danny270793.analytics.backend.application.dto.LoginResponse;
-import io.github.danny270793.analytics.backend.application.dto.RegisterUserRequest;
-import io.github.danny270793.analytics.backend.application.dto.UserResponse;
+import io.github.danny270793.analytics.backend.application.dto.request.LoginRequest;
+import io.github.danny270793.analytics.backend.application.dto.response.LoginResponse;
+import io.github.danny270793.analytics.backend.application.dto.request.RegisterUserRequest;
+import io.github.danny270793.analytics.backend.application.dto.response.UserResponse;
 
 import java.util.List;
 import java.util.UUID;

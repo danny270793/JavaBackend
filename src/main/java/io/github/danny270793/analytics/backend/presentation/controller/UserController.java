@@ -1,6 +1,6 @@
 package io.github.danny270793.analytics.backend.presentation.controller;
 
-import io.github.danny270793.analytics.backend.application.dto.UserResponse;
+import io.github.danny270793.analytics.backend.application.dto.response.UserResponse;
 import io.github.danny270793.analytics.backend.application.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
