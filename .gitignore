@@ -37,9 +37,8 @@ out/
 .vscode/
 
 ### Environment Variables ###
-.env
-.env.prod
-.env.local
+.env*
+!.env.example
 
 ### macOS ###
 .DS_Store
