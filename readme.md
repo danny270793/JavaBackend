@@ -78,7 +78,7 @@ backend/
 │   └── test/
 ├── docs/                            # Documentation
 ├── docker-compose.yml               # Docker orchestration
-├── Dockerfile                       # Multi-stage Docker build
+├── dockerfile                       # Multi-stage Docker build
 └── build.gradle                     # Gradle dependencies
 ```
 
