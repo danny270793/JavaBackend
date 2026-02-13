@@ -38,6 +38,8 @@ out/
 
 ### Environment Variables ###
 .env
+.env.prod
+.env.local
 
 ### macOS ###
 .DS_Store
