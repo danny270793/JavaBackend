@@ -8,9 +8,13 @@ import io.github.danny270793.analytics.backend.domain.exception.EventNotFoundExc
 import io.github.danny270793.analytics.backend.domain.model.Event;
 import io.github.danny270793.analytics.backend.infrastructure.persistence.adapter.EventEntityAdapter;
 import io.github.danny270793.analytics.backend.infrastructure.persistence.entity.EventEntity;
+import io.github.danny270793.analytics.backend.infrastructure.persistence.entity.UserEntity;
 import io.github.danny270793.analytics.backend.infrastructure.persistence.repository.EventJpaRepository;
+import io.github.danny270793.analytics.backend.infrastructure.persistence.repository.UserJpaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,19 +28,51 @@ public class EventServiceImpl implements EventService {
     private static final Logger log = LoggerFactory.getLogger(EventServiceImpl.class);
 
     private final EventJpaRepository eventJpaRepository;
+    private final UserJpaRepository userJpaRepository;
 
-    public EventServiceImpl(EventJpaRepository eventJpaRepository) {
+    public EventServiceImpl(EventJpaRepository eventJpaRepository, UserJpaRepository userJpaRepository) {
         this.eventJpaRepository = eventJpaRepository;
+        this.userJpaRepository = userJpaRepository;
     }
 
     @Override
     public EventResponse createEvent(CreateEventRequest request) {
         log.info("Creating new event: type={}, from={}, to={}", request.getType(), request.getFrom(), request.getTo());
-        Event event = new Event(null, request.getType(), request.getFrom(), request.getTo());
+        
+        // Get the logged-in user from Spring Security context
+        UUID userId = getCurrentUserId();
+        log.debug("Creating event for user: {}", userId);
+        
+        Event event = new Event(null, request.getType(), request.getFrom(), request.getTo(), userId);
         EventEntity eventEntity = EventEntityAdapter.toEntity(event);
         EventEntity savedEntity = eventJpaRepository.save(eventEntity);
-        log.info("Event created successfully: id={}, type={}", savedEntity.getId(), savedEntity.getType());
+        log.info("Event created successfully: id={}, type={}, userId={}", savedEntity.getId(), savedEntity.getType(), savedEntity.getUserId());
         return EventResponse.fromDomain(EventEntityAdapter.toDomain(savedEntity));
+    }
+
+    /**
+     * Gets the current logged-in user's ID from the Spring Security context.
+     *
+     * @return the user ID
+     * @throws RuntimeException if user is not authenticated or not found
+     */
+    private UUID getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            log.error("No authenticated user found in security context");
+            throw new RuntimeException("User not authenticated");
+        }
+        
+        String username = authentication.getName();
+        log.debug("Fetching user ID for username: {}", username);
+        
+        UserEntity user = userJpaRepository.findByUsername(username)
+                .orElseThrow(() -> {
+                    log.error("Authenticated user not found in database: {}", username);
+                    return new RuntimeException("Authenticated user not found: " + username);
+                });
+        
+        return user.getId();
     }
 
     @Override
