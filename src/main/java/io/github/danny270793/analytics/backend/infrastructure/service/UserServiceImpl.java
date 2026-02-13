@@ -16,15 +16,15 @@ import io.github.danny270793.analytics.backend.infrastructure.persistence.reposi
 import io.github.danny270793.analytics.backend.infrastructure.security.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -141,13 +141,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserResponse> getAllUsers() {
-        log.debug("Fetching all users");
-        List<UserResponse> users = userJpaRepository.findAll().stream()
-                .map(entity -> UserResponse.fromDomain(UserEntityAdapter.toDomain(entity)))
-                .collect(Collectors.toList());
-        log.debug("Found {} users", users.size());
-        return users;
+    public Page<UserResponse> getAllUsers(Pageable pageable) {
+        log.debug("Fetching paginated users: page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
+        Page<UserEntity> userPage = userJpaRepository.findAll(pageable);
+        
+        log.debug("Found {} users (page {} of {})", 
+            userPage.getNumberOfElements(), 
+            userPage.getNumber() + 1, 
+            userPage.getTotalPages());
+        
+        return userPage.map(entity -> UserResponse.fromDomain(UserEntityAdapter.toDomain(entity)));
     }
 
     @Override

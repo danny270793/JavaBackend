@@ -7,11 +7,14 @@ import io.github.danny270793.analytics.backend.application.service.EventService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -41,10 +44,25 @@ public class EventController {
     }
 
     @GetMapping
-    public ResponseEntity<List<EventResponse>> getAllEvents() {
-        log.debug("GET /api/events - Fetching all events");
-        List<EventResponse> responses = eventService.findAllEvents();
-        log.debug("GET /api/events - Returning {} events", responses.size());
+    public ResponseEntity<Page<EventResponse>> getAllEvents(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDir) {
+        
+        log.debug("GET /api/events - Fetching paginated events: page={}, size={}, sort={}:{}", 
+                page, size, sortBy, sortDir);
+        
+        Sort.Direction direction = sortDir.equalsIgnoreCase("ASC") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        
+        Page<EventResponse> responses = eventService.findAllEvents(pageable);
+        
+        log.debug("GET /api/events - Returning {} events (page {} of {})", 
+                responses.getNumberOfElements(), 
+                responses.getNumber() + 1, 
+                responses.getTotalPages());
+        
         return ResponseEntity.ok(responses);
     }
 
