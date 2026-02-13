@@ -1,4 +1,4 @@
-# Development Dockerfile with hot reload support
+# Development dockerfile with hot reload support
 FROM gradle:8.5-jdk17
 
 WORKDIR /app
