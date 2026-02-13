@@ -147,7 +147,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public void deleteEvent(UUID id) {
-        log.info("Attempting to delete event: id={}", id);
+        log.info("Attempting to soft delete event: id={}", id);
         UUID currentUserId = getCurrentUserId();
         
         EventEntity eventEntity = eventJpaRepository.findById(id)
@@ -159,8 +159,10 @@ public class EventServiceImpl implements EventService {
         // Check if the event belongs to the current user
         verifyEventOwnership(eventEntity, currentUserId);
         
-        eventJpaRepository.deleteById(id);
-        log.info("Event deleted successfully: id={}, userId={}", id, currentUserId);
+        eventEntity.markAsDeleted(currentUserId);
+        eventJpaRepository.save(eventEntity);
+        
+        log.info("Event soft deleted successfully: id={}, deletedBy={}", id, currentUserId);
     }
 
     /**
