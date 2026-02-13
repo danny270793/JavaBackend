@@ -1,3 +1,5 @@
+// project dependencies and tasks
+
 plugins {
 	// java compilation tasks like: compileJava, test, jar, build
 	id 'java'
