@@ -1,0 +1,41 @@
+services:
+  backend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      args:
+        - GRADLE_OPTS=-Dorg.gradle.daemon=false
+    platform: linux/amd64
+    ports:
+      - "8080:8080"
+      - "5005:5005"  # Debug port
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - JWT_SECRET=${JWT_SECRET:-dev-secret-key-for-local-development-only-not-for-production}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-86400000}
+      # Java debug options
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+    volumes:
+      # Mount source code for hot reload with devtools
+      - ./src:/app/src:ro
+      - ./build:/app/build
+      - gradle-cache:/home/gradle/.gradle
+    networks:
+      - analytics-dev-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    stdin_open: true
+    tty: true
+
+networks:
+  analytics-dev-network:
+    driver: bridge
+
+volumes:
+  gradle-cache:
+    driver: local
