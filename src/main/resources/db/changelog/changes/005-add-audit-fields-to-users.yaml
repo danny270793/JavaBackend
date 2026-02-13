@@ -1,0 +1,68 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-add-audit-fields-to-users
+      author: dvaca
+      changes:
+        # Add created_by field
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: created_by
+                  type: UUID
+                  constraints:
+                    nullable: true
+
+        # Add updated_by field
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: updated_by
+                  type: UUID
+                  constraints:
+                    nullable: true
+
+        # Add deleted_at field for soft delete
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: deleted_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: true
+
+        # Add deleted_by field for soft delete
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: deleted_by
+                  type: UUID
+                  constraints:
+                    nullable: true
+
+        # Add index on deleted_at for soft delete queries
+        - createIndex:
+            indexName: idx_users_deleted_at
+            tableName: users
+            columns:
+              - column:
+                  name: deleted_at
+      rollback:
+        - dropIndex:
+            indexName: idx_users_deleted_at
+            tableName: users
+        - dropColumn:
+            tableName: users
+            columnName: deleted_by
+        - dropColumn:
+            tableName: users
+            columnName: deleted_at
+        - dropColumn:
+            tableName: users
+            columnName: updated_by
+        - dropColumn:
+            tableName: users
+            columnName: created_by
