@@ -32,9 +32,7 @@ public final class UserEntityAdapter {
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
-                user.getPassword(),
-                user.getCreatedAt(),
-                user.getUpdatedAt()
+                user.getPassword()
         );
     }
 
@@ -54,7 +52,9 @@ public final class UserEntityAdapter {
                 entity.getEmail(),
                 entity.getPassword(),
                 entity.getCreatedAt(),
-                entity.getUpdatedAt()
+                entity.getCreatedBy(),
+                entity.getUpdatedAt(),
+                entity.getUpdatedBy()
         );
     }
 }
