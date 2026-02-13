@@ -17,6 +17,20 @@ public class Event {
     public Event() {
     }
 
+    /**
+     * Constructor for creating new events (audit fields will be populated by JPA auditing).
+     */
+    public Event(UUID id, EventType type, String from, String to, UUID userId) {
+        this.id = id;
+        this.type = type;
+        this.from = from;
+        this.to = to;
+        this.userId = userId;
+    }
+
+    /**
+     * Full constructor including audit fields (used when mapping from EventEntity).
+     */
     public Event(UUID id, EventType type, String from, String to, UUID userId, 
                  LocalDateTime createdAt, UUID createdBy, LocalDateTime updatedAt, UUID updatedBy) {
         this.id = id;
