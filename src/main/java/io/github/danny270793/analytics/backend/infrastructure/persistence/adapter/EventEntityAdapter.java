@@ -32,7 +32,8 @@ public final class EventEntityAdapter {
                 event.getId(),
                 event.getType(),
                 event.getFrom(),
-                event.getTo()
+                event.getTo(),
+                event.getUserId()
         );
     }
 
@@ -50,7 +51,8 @@ public final class EventEntityAdapter {
                 entity.getId(),
                 entity.getType(),
                 entity.getFrom(),
-                entity.getTo()
+                entity.getTo(),
+                entity.getUserId()
         );
     }
 }
