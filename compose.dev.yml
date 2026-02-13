@@ -21,7 +21,7 @@ services:
       - ./build:/app/build
       - gradle-cache:/home/gradle/.gradle
     networks:
-      - analytics-dev-network
+      - network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
@@ -33,7 +33,7 @@ services:
     tty: true
 
 networks:
-  analytics-dev-network:
+  network:
     driver: bridge
 
 volumes:
