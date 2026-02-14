@@ -1,4 +1,11 @@
 databaseChangeLog:
   - includeAll:
       path: db/changelog/changes/
+      # Classpath root: src/main/resources/
+      #        + path: db/changelog/changes/
+      #        = src/main/resources/db/changelog/changes/
       relativeToChangelogFile: false
+      # Master file location: src/main/resources/db/changelog/db.changelog-master.yaml
+      #              + path: changes/
+      #              = src/main/resources/db/changelog/changes/
+      # relativeToChangelogFile: true
