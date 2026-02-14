@@ -12,6 +12,7 @@ Spring Boot backend application for analytics tracking with event management and
 - **PostgreSQL**: Production-ready relational database
 - **Security**: Spring Security with JWT tokens
 - **Health Monitoring**: Spring Boot Actuator endpoints
+- **API Documentation**: Interactive Swagger/OpenAPI documentation
 
 ## Quick Start
 
@@ -37,6 +38,12 @@ docker compose up postgres -d
 
 The application will be available at `http://localhost:8080`
 
+### API Documentation
+
+Interactive API documentation is available via Swagger UI at: **http://localhost:8080/swagger-ui.html**
+
+See [Swagger Documentation](docs/SWAGGER.md) for detailed usage instructions including JWT authentication.
+
 ### Default Admin Credentials
 
 - **Username**: `admin`
@@ -52,6 +59,7 @@ The application will be available at `http://localhost:8080`
 - **[Docker Documentation](docs/DOCKER_DOCUMENTATION.md)** - Docker setup, deployment, and best practices
 
 ### API Documentation
+- **[Swagger/OpenAPI Documentation](docs/SWAGGER.md)** - Interactive API documentation and testing
 - **[API Documentation](docs/API_DOCUMENTATION.md)** - Event CRUD API endpoints and examples
 - **[User API Documentation](docs/USER_API_DOCUMENTATION.md)** - User management and authentication endpoints
 - **[Authentication Documentation](docs/AUTHENTICATION_DOCUMENTATION.md)** - JWT authentication flow and security
@@ -91,6 +99,7 @@ backend/
 - **Migrations**: Liquibase
 - **Build Tool**: Gradle 9.3
 - **Container**: Docker + Docker Compose
+- **API Documentation**: Swagger/OpenAPI 3.0 (springdoc-openapi)
 
 ## API Overview
 
