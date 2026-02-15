@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.UUID;
@@ -15,6 +16,7 @@ import java.util.UUID;
  * Default admin user seeder.
  * Creates default admin user on startup if it doesn't exist.
  * Active in ALL profiles (dev, prod, test) for consistent admin access.
+ * Executes first (Order = 1) to ensure admin user exists before other seeders run.
  */
 @Configuration
 public class AdminUserSeeder {
@@ -27,6 +29,7 @@ public class AdminUserSeeder {
     private static final String ADMIN_PASSWORD = "admin";
 
     @Bean
+    @Order(1)  // Run first to ensure admin user exists before other seeders
     CommandLineRunner seedAdminUser(
             UserJpaRepository userRepository,
             PasswordEncoder passwordEncoder) {

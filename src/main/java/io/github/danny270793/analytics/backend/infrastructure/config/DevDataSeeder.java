@@ -11,6 +11,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import java.util.UUID;
  * 
  * Note: Admin user is created separately by AdminUserSeeder (active in all profiles).
  * This seeder creates additional test users (user1-user10) and their events.
+ * Executes second (Order = 2) after AdminUserSeeder completes.
  */
 @Configuration
 @Profile("dev")
@@ -50,6 +52,7 @@ public class DevDataSeeder {
     };
 
     @Bean
+    @Order(2)  // Run after AdminUserSeeder (Order 1) completes
     CommandLineRunner seedDatabase(
             UserJpaRepository userRepository,
             EventJpaRepository eventRepository,
