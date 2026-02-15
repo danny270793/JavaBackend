@@ -111,7 +111,7 @@ public class DevDataSeeder {
             String email = firstName.toLowerCase() + "." + lastName.toLowerCase() + i + "@example.com";
 
             UserEntity user = new UserEntity();
-            user.setId(UUID.randomUUID());
+            // Don't set ID - let JPA auto-generate it to avoid merge() conflicts
             user.setUsername(username);
             user.setEmail(email);
             user.setPassword(encodedPassword);
@@ -143,7 +143,7 @@ public class DevDataSeeder {
                 }
 
                 EventEntity event = new EventEntity();
-                event.setId(UUID.randomUUID());
+                // Don't set ID - let JPA auto-generate it to avoid merge() conflicts
                 event.setType(type);
                 event.setFrom(from);
                 event.setTo(to);

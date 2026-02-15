@@ -22,8 +22,6 @@ import java.util.UUID;
 public class AdminUserSeeder {
     private static final Logger log = LoggerFactory.getLogger(AdminUserSeeder.class);
 
-    // Fixed UUID for admin user (consistent across environments)
-    private static final UUID ADMIN_UUID = UUID.fromString("00000000-0000-0000-0000-000000000001");
     private static final String ADMIN_USERNAME = "admin";
     private static final String ADMIN_EMAIL = "admin@analytics.local";
     private static final String ADMIN_PASSWORD = "admin";
@@ -43,16 +41,17 @@ public class AdminUserSeeder {
             log.info("=".repeat(80));
             log.info("👤 Creating default admin user...");
 
+            // Create new admin user entity (UUID will be auto-generated)
             UserEntity adminUser = new UserEntity();
-            adminUser.setId(ADMIN_UUID);
             adminUser.setUsername(ADMIN_USERNAME);
             adminUser.setEmail(ADMIN_EMAIL);
             adminUser.setPassword(passwordEncoder.encode(ADMIN_PASSWORD));
 
-            userRepository.save(adminUser);
+            UserEntity savedUser = userRepository.save(adminUser);
 
             log.info("✅ Default admin user created successfully");
             log.info("🔑 Credentials: username='{}' password='{}'", ADMIN_USERNAME, ADMIN_PASSWORD);
+            log.info("🆔 Admin user ID: {}", savedUser.getId());
             log.warn("⚠️  SECURITY WARNING: Change default admin password before production deployment!");
             log.info("=".repeat(80));
         };
