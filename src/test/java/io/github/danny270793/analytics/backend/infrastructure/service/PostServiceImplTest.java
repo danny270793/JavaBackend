@@ -5,7 +5,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.ParameterizedTypeReference;
@@ -26,7 +25,6 @@ class PostServiceImplTest {
     @Mock
     private RestTemplate restTemplate;
 
-    @InjectMocks
     private PostServiceImpl postService;
 
     private PostResponse[] mockPosts;
@@ -34,6 +32,9 @@ class PostServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        // Explicit constructor injection
+        postService = new PostServiceImpl(restTemplate);
+        
         mockPost = new PostResponse(1L, 1L, "Test Title", "Test Body");
         mockPosts = new PostResponse[]{
                 mockPost,
