@@ -14,7 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
@@ -50,7 +49,6 @@ class EventServiceImplTest {
     @Mock
     private Authentication authentication;
 
-    @InjectMocks
     private EventServiceImpl eventService;
 
     private EventEntity testEvent;
@@ -59,6 +57,9 @@ class EventServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        // Explicit constructor injection
+        eventService = new EventServiceImpl(eventJpaRepository, userJpaRepository);
+        
         testEventId = UUID.randomUUID();
         testUserId = UUID.randomUUID();
         
