@@ -19,7 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
 @Tag(name = "Authentication", description = "User authentication and registration endpoints")
 public class AuthController {
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
