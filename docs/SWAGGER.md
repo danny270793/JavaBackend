@@ -16,11 +16,11 @@ Most endpoints in this API require JWT authentication. To test authenticated end
 
 1. **Register a new user** (if you don't have one):
    - Navigate to `Authentication` section
-   - Use `POST /api/auth/register`
+   - Use `POST /api/v1/auth/register`
    - Provide username, email, and password
 
 2. **Login to get JWT token**:
-   - Use `POST /api/auth/login`
+   - Use `POST /api/v1/auth/login`
    - Enter your credentials
    - Copy the `token` from the response
 
@@ -36,8 +36,8 @@ Most endpoints in this API require JWT authentication. To test authenticated end
 ## API Sections
 
 ### Authentication
-- **POST /api/auth/register**: Register a new user
-- **POST /api/auth/login**: Login and get JWT token
+- **POST /api/v1/auth/register**: Register a new user
+- **POST /api/v1/auth/login**: Login and get JWT token
 
 ### Events
 All event endpoints require authentication. Users can only access their own events.
