@@ -4,7 +4,17 @@
 
 In **dev profile**, the Analytics Backend automatically populates the database with random test data on startup. This provides realistic data for development and testing without manual data entry.
 
+**Admin user is created in ALL profiles** (dev, prod, test) via `AdminUserSeeder` for consistent administrative access.
+
 ## Features
+
+### Admin User Creation (All Profiles)
+- ✅ **Automatic Creation**: Admin user created on first startup
+- ✅ **Consistent Credentials**: Same admin/admin across environments
+- ✅ **Idempotent**: Skips if admin already exists
+- ✅ **Fixed UUID**: Predictable admin user ID across deployments
+
+### Test Data Seeding (Dev Profile Only)
 
 - ✅ **Automatic Seeding**: Runs automatically when `dev` profile is active
 - ✅ **Random Data**: Generates realistic users and events
@@ -16,7 +26,20 @@ In **dev profile**, the Analytics Backend automatically populates the database w
 
 ## Generated Data
 
-### Users (10 users)
+### Admin User (All Profiles)
+
+**Created by**: `AdminUserSeeder`  
+**Active in**: dev, prod, test profiles  
+
+**Credentials**:
+- Username: `admin`
+- Password: `admin`
+- Email: `admin@analytics.local`
+- UUID: `00000000-0000-0000-0000-000000000001` (fixed)
+
+⚠️ **Security Warning**: Change admin password before production deployment!
+
+### Test Users (Dev Profile Only)
 
 **Username Pattern**: `user1`, `user2`, `user3`, ..., `user10`  
 **Password**: `password` (for all test users)  
@@ -61,30 +84,58 @@ docker compose -f compose.dev.yml up
 
 ### Startup Logs
 
+#### Admin User Creation (All Profiles)
+
+```
+================================================================================
+👤 Creating default admin user...
+✅ Default admin user created successfully
+🔑 Credentials: username='admin' password='admin'
+⚠️  SECURITY WARNING: Change default admin password before production deployment!
+================================================================================
+```
+
+Or if admin already exists:
+
+```
+👤 Admin user already exists - skipping creation
+```
+
+#### Test Data Seeding (Dev Profile Only)
+
 When seeding occurs, you'll see:
 
 ```
 ================================================================================
-🌱 DEV PROFILE DETECTED - Starting database seeding...
+🌱 DEV PROFILE - Starting test data seeding...
 ================================================================================
-✓ Created 10 test users
+✓ Created 10 test users (user1-user10)
 ✓ Created 423 test events
 ================================================================================
-✅ Database seeding completed successfully in 234ms
-📊 Summary: 10 users, 423 events
+✅ Test data seeding completed successfully in 234ms
+📊 Summary: 10 test users, 423 events
 🔑 Test credentials: username='user1' password='password' (and user2-user10)
+👤 Admin credentials: username='admin' password='admin' (created by AdminUserSeeder)
 ================================================================================
 ```
 
 ### Skip Seeding (If Data Exists)
 
-If the database already has data:
+#### Admin User Already Exists
+
+```
+👤 Admin user already exists - skipping creation
+```
+
+#### Test Data Already Exists (Dev Profile)
+
+If the database already has test data:
 
 ```
 ================================================================================
-🌱 DEV PROFILE DETECTED - Starting database seeding...
+🌱 DEV PROFILE - Starting test data seeding...
 ================================================================================
-📊 Database already contains data (Users: 10, Events: 423)
+📊 Database already contains test data (Users: 11, Events: 423)
 ⏭️  Skipping seeding to avoid duplicates
 💡 To reseed, drop the database and restart the application
 ================================================================================
@@ -92,7 +143,25 @@ If the database already has data:
 
 ## Usage
 
-### Test with Seeded Data
+### Authentication
+
+#### Admin User (All Environments)
+
+Use admin credentials for administrative access:
+
+```bash
+# Login as admin
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "admin",
+    "password": "admin"
+  }'
+```
+
+⚠️ **Production**: Always change the default admin password!
+
+#### Test Users (Dev Environment Only)
 
 1. **Start application in dev mode**:
    ```bash
@@ -212,22 +281,77 @@ private static final String[] FIRST_NAMES = {
 
 ## Profile-Specific Behavior
 
+### All Profiles
+
+**Admin User Creation**:
+- **Runs on every startup**
+- ✅ Creates admin user if not exists
+- ✅ Idempotent (safe to run multiple times)
+- ✅ Fixed UUID: `00000000-0000-0000-0000-000000000001`
+- ✅ Credentials: `admin` / `admin`
+- ⚠️ Change password in production!
+
 ### Dev Profile ✅
-- **Seeding**: Enabled
-- **Database**: H2 (in-memory)
-- **Data Persistence**: Lost on restart (fresh data each time)
+
+**Admin User**:
+- ✅ Created via `AdminUserSeeder`
+
+**Test Data Seeding**:
+- ✅ Enabled via `DevDataSeeder`
+- ✅ 10 test users (user1-user10)
+- ✅ ~400 random events
+- ✅ H2 (in-memory database)
+- ⚠️ Data lost on restart (fresh data each time)
 
 ### Prod Profile ❌
-- **Seeding**: Disabled
-- **Database**: PostgreSQL
-- **Data Persistence**: Permanent
 
-### Test Profile ❌
-- **Seeding**: Disabled (tests create their own data)
-- **Database**: H2 (in-memory)
-- **Liquibase**: drop-first enabled
+**Admin User**:
+- ✅ Created via `AdminUserSeeder`
+
+**Test Data Seeding**:
+- ❌ Disabled (`@Profile("dev")` on `DevDataSeeder`)
+- ✅ PostgreSQL (persistent database)
+- ✅ Clean start
+- ✅ Production-ready
+
+### Test Profile 🧪
+
+**Admin User**:
+- ✅ Created via `AdminUserSeeder`
+
+**Test Data Seeding**:
+- ❌ Disabled (test profile doesn't activate dev profile)
+- ✅ H2 (in-memory database)
+- ✅ Clean slate for each test run
+- ✅ Liquibase `drop-first=true`
 
 ## Implementation Details
+
+### Component: AdminUserSeeder
+
+**Location**: `io.github.danny270793.analytics.backend.infrastructure.config.AdminUserSeeder`
+
+**Functionality**:
+- Creates default admin user on application startup
+- Active in **ALL profiles** (dev, prod, test)
+- Idempotent (checks if admin already exists)
+- Fixed UUID for consistency across deployments
+
+**Code Structure**:
+```java
+@Configuration
+public class AdminUserSeeder {
+    @Bean
+    CommandLineRunner seedAdminUser(
+        UserJpaRepository userRepository,
+        PasswordEncoder passwordEncoder
+    ) {
+        // Check if admin exists
+        // Create if not exists
+        // Log credentials
+    }
+}
+```
 
 ### Component: DevDataSeeder
 
@@ -243,14 +367,20 @@ private static final String[] FIRST_NAMES = {
 1. Spring Boot starts
 2. Application context initializes
 3. Liquibase migrations run (create tables)
-4. `CommandLineRunner` beans execute
-5. `DevDataSeeder` checks for existing data
-6. If empty, generates and saves test data
-7. Application ready to accept requests
+4. `CommandLineRunner` beans execute:
+   - `AdminUserSeeder` creates admin user (all profiles)
+   - `DevDataSeeder` creates test data (dev profile only)
+5. Application ready to accept requests
 
 ### Data Generation Strategy
 
-**Users**:
+**Admin User** (All Profiles):
+- Fixed UUID: `00000000-0000-0000-0000-000000000001`
+- Username: `admin`
+- Email: `admin@analytics.local`
+- Password: `admin` (BCrypt hashed)
+
+**Test Users** (Dev Profile Only):
 - Sequential usernames: `user1`, `user2`, etc.
 - Random name combinations from predefined lists
 - Consistent password: `password` (BCrypt hashed)

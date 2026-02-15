@@ -11,6 +11,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.ArrayList;
@@ -22,6 +23,10 @@ import java.util.UUID;
  * Database seeder for development environment.
  * Automatically populates database with random test data on application startup.
  * Only active in 'dev' profile.
+ * 
+ * Note: Admin user is created separately by AdminUserSeeder (active in all profiles).
+ * This seeder creates additional test users (user1-user10) and their events.
+ * Executes second (Order = 2) after AdminUserSeeder completes.
  */
 @Configuration
 @Profile("dev")
@@ -47,21 +52,23 @@ public class DevDataSeeder {
     };
 
     @Bean
+    @Order(2)  // Run after AdminUserSeeder (Order 1) completes
     CommandLineRunner seedDatabase(
             UserJpaRepository userRepository,
             EventJpaRepository eventRepository,
             PasswordEncoder passwordEncoder) {
         return args -> {
             log.info("=".repeat(80));
-            log.info("🌱 DEV PROFILE DETECTED - Starting database seeding...");
+            log.info("🌱 DEV PROFILE - Starting test data seeding...");
             log.info("=".repeat(80));
 
-            // Check if data already exists
+            // Check if test data already exists (skip admin user in count)
             long existingUsers = userRepository.count();
             long existingEvents = eventRepository.count();
 
-            if (existingUsers > 0 || existingEvents > 0) {
-                log.info("📊 Database already contains data (Users: {}, Events: {})", existingUsers, existingEvents);
+            // Admin user will be created by AdminUserSeeder, so we check if there's more than 1 user
+            if (existingUsers > 1 || existingEvents > 0) {
+                log.info("📊 Database already contains test data (Users: {}, Events: {})", existingUsers, existingEvents);
                 log.info("⏭️  Skipping seeding to avoid duplicates");
                 log.info("💡 To reseed, drop the database and restart the application");
                 log.info("=".repeat(80));
@@ -70,21 +77,22 @@ public class DevDataSeeder {
 
             long startTime = System.currentTimeMillis();
 
-            // Generate users
+            // Generate test users (user1-user10)
             List<UserEntity> users = generateUsers(10, passwordEncoder);
             List<UserEntity> savedUsers = userRepository.saveAll(users);
-            log.info("✓ Created {} test users", savedUsers.size());
+            log.info("✓ Created {} test users (user1-user10)", savedUsers.size());
 
-            // Generate events for each user
+            // Generate events for each test user
             List<EventEntity> events = generateEvents(savedUsers, 50);
             List<EventEntity> savedEvents = eventRepository.saveAll(events);
             log.info("✓ Created {} test events", savedEvents.size());
 
             long duration = System.currentTimeMillis() - startTime;
             log.info("=".repeat(80));
-            log.info("✅ Database seeding completed successfully in {}ms", duration);
-            log.info("📊 Summary: {} users, {} events", savedUsers.size(), savedEvents.size());
+            log.info("✅ Test data seeding completed successfully in {}ms", duration);
+            log.info("📊 Summary: {} test users, {} events", savedUsers.size(), savedEvents.size());
             log.info("🔑 Test credentials: username='user1' password='password' (and user2-user10)");
+            log.info("👤 Admin credentials: username='admin' password='admin' (created by AdminUserSeeder)");
             log.info("=".repeat(80));
         };
     }
@@ -103,7 +111,7 @@ public class DevDataSeeder {
             String email = firstName.toLowerCase() + "." + lastName.toLowerCase() + i + "@example.com";
 
             UserEntity user = new UserEntity();
-            user.setId(UUID.randomUUID());
+            // Don't set ID - let JPA auto-generate it to avoid merge() conflicts
             user.setUsername(username);
             user.setEmail(email);
             user.setPassword(encodedPassword);
@@ -135,7 +143,7 @@ public class DevDataSeeder {
                 }
 
                 EventEntity event = new EventEntity();
-                event.setId(UUID.randomUUID());
+                // Don't set ID - let JPA auto-generate it to avoid merge() conflicts
                 event.setType(type);
                 event.setFrom(from);
                 event.setTo(to);
