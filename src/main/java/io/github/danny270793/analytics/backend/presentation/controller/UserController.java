@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/v1/users")
 @Tag(name = "Users", description = "User management endpoints - requires authentication")
 @SecurityRequirement(name = "Bearer Authentication")
 public class UserController {
