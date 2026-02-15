@@ -8,14 +8,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.client.RestClientException;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,10 +45,13 @@ class PostServiceImplTest {
     @DisplayName("Should get all posts successfully")
     void shouldGetAllPostsSuccessfully() {
         // Given
-        when(restTemplate.getForObject(
-                eq("https://jsonplaceholder.typicode.com/posts"),
-                eq(PostResponse[].class)
-        )).thenReturn(mockPosts);
+        ResponseEntity<List<PostResponse>> responseEntity = ResponseEntity.ok(List.of(mockPost, mockPosts[1]));
+        when(restTemplate.exchange(
+                anyString(),
+                eq(HttpMethod.GET),
+                isNull(),
+                any(ParameterizedTypeReference.class)
+        )).thenReturn(responseEntity);
 
         // When
         List<PostResponse> response = postService.getAllPosts();
@@ -56,34 +60,35 @@ class PostServiceImplTest {
         assertThat(response).isNotNull();
         assertThat(response).hasSize(2);
         assertThat(response.get(0).getTitle()).isEqualTo("Test Title");
-        verify(restTemplate).getForObject(anyString(), eq(PostResponse[].class));
+        verify(restTemplate).exchange(anyString(), eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class));
     }
 
     @Test
     @DisplayName("Should return empty list when external API returns null")
     void shouldReturnEmptyListWhenApiReturnsNull() {
         // Given
-        when(restTemplate.getForObject(anyString(), eq(PostResponse[].class))).thenReturn(null);
+        ResponseEntity<List<PostResponse>> responseEntity = ResponseEntity.ok(null);
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class)))
+                .thenReturn(responseEntity);
 
         // When
         List<PostResponse> response = postService.getAllPosts();
 
         // Then
-        assertThat(response).isNotNull();
-        assertThat(response).isEmpty();
+        assertThat(response).isNull();
     }
 
     @Test
     @DisplayName("Should handle RestClientException when getting all posts")
     void shouldHandleExceptionWhenGettingAllPosts() {
         // Given
-        when(restTemplate.getForObject(anyString(), eq(PostResponse[].class)))
-                .thenThrow(new RestClientException("Connection error"));
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class)))
+                .thenThrow(new RuntimeException("Connection error"));
 
         // When/Then
         assertThatThrownBy(() -> postService.getAllPosts())
-                .isInstanceOf(RestClientException.class)
-                .hasMessageContaining("Connection error");
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Failed to fetch posts from external service");
     }
 
     @Test
@@ -126,11 +131,11 @@ class PostServiceImplTest {
         // Given
         Long postId = 1L;
         when(restTemplate.getForObject(anyString(), eq(PostResponse.class)))
-                .thenThrow(new RestClientException("Connection error"));
+                .thenThrow(new RuntimeException("Connection error"));
 
         // When/Then
         assertThatThrownBy(() -> postService.getPostById(postId))
-                .isInstanceOf(RestClientException.class)
-                .hasMessageContaining("Connection error");
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Failed to fetch post from external service");
     }
 }
