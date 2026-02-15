@@ -524,7 +524,7 @@ curl http://localhost:8080/actuator/health
 
 ### 2. Register User
 ```bash
-curl -X POST http://localhost:8080/api/auth/register \
+curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "username": "testuser",
@@ -535,7 +535,7 @@ curl -X POST http://localhost:8080/api/auth/register \
 
 ### 3. Login
 ```bash
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "testuser",
