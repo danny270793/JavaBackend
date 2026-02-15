@@ -7,6 +7,8 @@ plugins {
 	id 'org.springframework.boot' version '4.0.2'
 	// spring dependency management tasks like: resolve, clean, verify, compileJava, compileTestJava, processResources, processTestResources, testCompile, testRuntime, bootRun, bootJar, bootWar, bootTest, bootTestReport
 	id 'io.spring.dependency-management' version '1.1.7'
+	// code coverage reporting
+	id 'jacoco'
 }
 
 group = 'io.github.danny270793.analytics'
@@ -89,4 +91,69 @@ dependencies {
 tasks.named('test') {
 	// to task called test, use junit platform launcher
 	useJUnitPlatform()
+	// generate jacoco execution data for coverage report
+	finalizedBy jacocoTestReport
 }
+
+jacoco {
+	// jacoco version compatible with Java 17
+	toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+	// generate coverage report after tests
+	dependsOn test
+	
+	reports {
+		// generate xml report for CI/CD tools
+		xml.required = true
+		// generate html report for human readable coverage
+		html.required = true
+		// csv report disabled
+		csv.required = false
+		
+		// html report location
+		html.outputLocation = layout.buildDirectory.dir('reports/jacoco/html')
+	}
+	
+	// exclude generated code and DTOs from coverage
+	afterEvaluate {
+		classDirectories.setFrom(files(classDirectories.files.collect {
+			fileTree(dir: it, exclude: [
+				'**/dto/**',
+				'**/config/**',
+				'**/BackendApplication.class'
+			])
+		}))
+	}
+}
+
+jacocoTestCoverageVerification {
+	violationRules {
+		rule {
+			// minimum coverage thresholds
+			limit {
+				minimum = 0.70 // 70% minimum coverage
+			}
+		}
+		
+		rule {
+			element = 'CLASS'
+			limit {
+				counter = 'LINE'
+				value = 'COVEREDRATIO'
+				minimum = 0.60 // 60% per class minimum
+			}
+			// exclude DTOs and configs from class-level verification
+			excludes = [
+				'*.dto.*',
+				'*.config.*',
+				'*.BackendApplication'
+			]
+		}
+	}
+}
+
+// run coverage verification after test report
+check.dependsOn jacocoTestCoverageVerification
+jacocoTestCoverageVerification.dependsOn jacocoTestReport
