@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/posts")
+@RequestMapping("/api/v1/posts")
 @Tag(name = "Posts", description = "External posts integration - fetches data from JSONPlaceholder API - requires authentication")
 @SecurityRequirement(name = "Bearer Authentication")
 public class PostController {
