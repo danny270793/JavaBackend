@@ -50,6 +50,10 @@ cd backend
 ./gradlew bootRun --args='--spring.profiles.active=dev'
 ```
 
+**Note**: Dev profile automatically seeds the database with 10 test users and ~400 events.
+- Test credentials: `user1`/`password` (through `user10`/`password`)
+- See [Dev Data Seeding](docs/DEV_DATA_SEEDING.md) for details
+
 #### Production Mode (PostgreSQL)
 ```bash
 # Start PostgreSQL with Docker Compose
@@ -106,6 +110,7 @@ See [Testing Documentation](docs/TESTING.md) for comprehensive testing guide.
 
 ### Getting Started
 - **[Environment Profiles](docs/PROFILES.md)** - Dev (H2) vs Prod (PostgreSQL) configuration
+- **[Dev Data Seeding](docs/DEV_DATA_SEEDING.md)** - Automatic test data generation in dev profile
 - **[Default Credentials](docs/DEFAULT_CREDENTIALS.md)** - Admin user credentials and security considerations
 - **[Environment Configuration](docs/ENV_CONFIGURATION.md)** - Environment variables and configuration guide
 - **[Docker Documentation](docs/DOCKER_DOCUMENTATION.md)** - Docker setup, deployment, and best practices
