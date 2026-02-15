@@ -7,7 +7,7 @@ plugins {
 	id 'org.springframework.boot' version '4.0.2'
 	// spring dependency management tasks like: resolve, clean, verify, compileJava, compileTestJava, processResources, processTestResources, testCompile, testRuntime, bootRun, bootJar, bootWar, bootTest, bootTestReport
 	id 'io.spring.dependency-management' version '1.1.7'
-	// code coverage reporting
+	// code coverage reporting: jacocoTestReport, jacocoTestCoverageVerification
 	id 'jacoco'
 }
 

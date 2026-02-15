@@ -164,6 +164,16 @@ testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 open build/reports/tests/test/index.html
 ```
 
+### View Coverage Report
+```bash
+open build/reports/jacoco/html/index.html
+```
+
+### Run Coverage Verification
+```bash
+./gradlew test jacocoTestCoverageVerification
+```
+
 ## Test Results Summary
 
 ### Current Status
@@ -253,6 +263,35 @@ Due to complexity with Spring Boot 4.x and dependency issues, integration tests 
 **Solution**: Ensure correct argument matchers (`any()`, `eq()`, etc.)
 
 ## Code Quality Metrics
+
+### Code Coverage (JaCoCo)
+
+The project uses JaCoCo for code coverage analysis with the following configuration:
+
+**Coverage Thresholds:**
+- Overall minimum coverage: **70%**
+- Per-class minimum coverage: **60%**
+
+**Excluded from Coverage:**
+- DTOs (`**/dto/**`)
+- Configuration classes (`**/config/**`)
+- Main application class
+
+**Reports Generated:**
+- HTML: `build/reports/jacoco/html/index.html` (human-readable)
+- XML: `build/reports/jacoco/test/jacocoTestReport.xml` (CI/CD integration)
+
+**Running Coverage:**
+```bash
+# Generate coverage report
+./gradlew test jacocoTestReport
+
+# Verify coverage meets minimum thresholds
+./gradlew jacocoTestCoverageVerification
+
+# View HTML report
+open build/reports/jacoco/html/index.html
+```
 
 ### Test Coverage Goals
 - **Service Layer**: 80%+ coverage ✅
