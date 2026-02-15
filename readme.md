@@ -28,6 +28,7 @@ Spring Boot backend application for analytics tracking with event management, us
 - **Security**: Spring Security with JWT tokens, BCrypt password encoding, and CORS configuration
 - **Health Monitoring**: Spring Boot Actuator endpoints for application health checks
 - **API Documentation**: Interactive Swagger/OpenAPI 3.0 documentation with authentication support
+- **Request Logging**: Automatic performance tracking with duration logging for every API request
 
 ## Quick Start
 
@@ -118,6 +119,7 @@ See [Testing Documentation](docs/TESTING.md) for comprehensive testing guide.
 
 ### Development
 - **[Testing Documentation](docs/TESTING.md)** - Comprehensive testing guide and coverage reports
+- **[Request Logging](docs/REQUEST_LOGGING.md)** - Performance monitoring and request timing logs
 - **[Database Migrations](docs/DATABASE_MIGRATIONS.md)** - Liquibase migration management guide
 - **[Liquibase Quick Start](docs/LIQUIBASE_QUICK_START.md)** - Quick reference for creating migrations
 - **[PostgreSQL Migration](docs/POSTGRESQL_MIGRATION.md)** - H2 to PostgreSQL migration guide
