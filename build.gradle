@@ -77,9 +77,13 @@ dependencies {
 	// h2 database for testing
 	testRuntimeOnly 'com.h2database:h2'
 	// testing tools for spring boot
-	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	// junit 5 test runner
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	// mockito for testing
+	testImplementation 'org.mockito:mockito-core'
+	// spring security test
+	testImplementation 'org.springframework.security:spring-security-test'
 }
 
 tasks.named('test') {
