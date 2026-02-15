@@ -122,9 +122,10 @@ class JwtUtilTest {
         // Wait for token to expire
         Thread.sleep(100);
 
-        // When/Then - Token should be invalid due to expiration
-        boolean isValid = shortExpirationJwtUtil.validateToken(token, userDetails);
-        assertThat(isValid).isFalse();
+        // When/Then - Token validation or extraction should fail due to expiration
+        assertThatThrownBy(() -> shortExpirationJwtUtil.validateToken(token, userDetails))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("expired");
     }
 
     @Test
