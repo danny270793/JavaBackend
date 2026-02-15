@@ -41,9 +41,9 @@ public class AuthController {
                     content = @Content)
     })
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterUserRequest request) {
-        log.info("POST /api/auth/register - Received registration request for username: {}", request.getUsername());
+        log.info("POST /api/v1/auth/register - Received registration request for username: {}", request.getUsername());
         UserResponse response = userService.registerUser(request);
-        log.info("POST /api/auth/register - Registration successful for user: {}", response.getUsername());
+        log.info("POST /api/v1/auth/register - Registration successful for user: {}", response.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -58,9 +58,9 @@ public class AuthController {
                     content = @Content)
     })
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        log.info("POST /api/auth/login - Received login request for username: {}", request.getUsername());
+        log.info("POST /api/v1/auth/login - Received login request for username: {}", request.getUsername());
         LoginResponse response = userService.login(request);
-        log.info("POST /api/auth/login - Login successful for user: {}", response.getUsername());
+        log.info("POST /api/v1/auth/login - Login successful for user: {}", response.getUsername());
         return ResponseEntity.ok(response);
     }
 }
