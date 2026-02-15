@@ -2,15 +2,23 @@
 
 ## Overview
 
-The Analytics Backend automatically logs the processing time for every API request, providing valuable insights into application performance and helping identify slow endpoints.
+The Analytics Backend automatically logs the processing time for every API request and external API call, providing valuable insights into application performance and helping identify slow endpoints and external dependencies.
 
 ## Features
 
+### Internal API Request Logging
 - ✅ **Automatic Timing**: Measures request processing time from start to finish
 - ✅ **Structured Logging**: Logs HTTP method, URI, status code, and duration
 - ✅ **Performance Warnings**: Alerts for slow requests (>1 second)
 - ✅ **Error Tracking**: Logs exceptions that occur during request processing
 - ✅ **Visual Indicators**: Uses symbols (✓/✗) for quick status identification
+
+### External API Call Logging
+- ✅ **Outbound Request Tracking**: Measures time for all external API calls
+- ✅ **HTTP Client Monitoring**: Tracks RestTemplate requests to external services
+- ✅ **Timeout Configuration**: 5s connect timeout, 10s read timeout
+- ✅ **Slow Call Detection**: Warns when external calls take >2 seconds
+- ✅ **Failure Tracking**: Logs connection failures and errors
 
 ## Implementation
 
@@ -18,17 +26,29 @@ The Analytics Backend automatically logs the processing time for every API reque
 
 1. **RequestLoggingInterceptor**: Intercepts all API requests to measure timing
 2. **WebMvcConfig**: Registers the interceptor for `/api/**` endpoints
+3. **ExternalApiLoggingInterceptor**: Intercepts RestTemplate calls to external APIs
+4. **RestTemplateConfig**: Configures RestTemplate with timing interceptor and timeouts
 
 ### What Gets Logged
 
-#### Incoming Request
+#### Incoming API Request
 ```
 INFO  → Incoming Request: POST /api/v1/auth/login
 ```
 
-#### Successful Response
+#### Outgoing External API Request
+```
+INFO  ⟶ Outgoing Request: GET https://jsonplaceholder.typicode.com/posts
+```
+
+#### Successful API Response
 ```
 INFO  ← ✓ Response: POST /api/v1/auth/login - Status: 200 - Duration: 45ms
+```
+
+#### Successful External API Response
+```
+INFO  ⟵ ✓ External API Response: GET https://jsonplaceholder.typicode.com/posts - Status: 200 - Duration: 234ms
 ```
 
 #### Error Response
@@ -36,9 +56,19 @@ INFO  ← ✓ Response: POST /api/v1/auth/login - Status: 200 - Duration: 45ms
 INFO  ← ✗ Response: POST /api/v1/auth/login - Status: 401 - Duration: 23ms
 ```
 
-#### Slow Request Warning
+#### External API Error
+```
+ERROR ⟵ ✗ External API Failed: GET https://jsonplaceholder.typicode.com/posts/999 - Error: 404 Not Found - Duration: 156ms
+```
+
+#### Slow Request Warning (Internal)
 ```
 WARN  ⚠ Slow Request Detected: GET /api/v1/events took 1234ms
+```
+
+#### Slow External API Call Warning
+```
+WARN  ⚠ Slow External API Call: GET https://jsonplaceholder.typicode.com/posts took 2345ms
 ```
 
 #### Request Exception
@@ -48,22 +78,35 @@ ERROR ✗ Request Failed: GET /api/v1/events/{id} - Error: Event not found with 
 
 ## Log Format
 
-### Standard Request Log
+### Internal API Request Log
 ```
 ← [✓/✗] Response: {METHOD} {URI} - Status: {HTTP_STATUS} - Duration: {TIME}ms
 ```
 
-**Components**:
+### External API Call Log
+```
+⟵ [✓/✗] External API Response: {METHOD} {URL} - Status: {HTTP_STATUS} - Duration: {TIME}ms
+```
+
+**Arrow Indicators**:
+- **→**: Incoming request to your API
+- **⟶**: Outgoing request to external API
+- **←**: Response from your API
+- **⟵**: Response from external API
+
+**Status Indicators**:
 - **✓**: Successful response (status < 400)
 - **✗**: Error response (status >= 400)
+
+**Components**:
 - **METHOD**: HTTP method (GET, POST, PUT, DELETE)
-- **URI**: Request path including query parameters
+- **URI/URL**: Request path or full URL
 - **HTTP_STATUS**: HTTP status code (200, 201, 400, 401, 403, 404, 500, etc.)
 - **TIME**: Duration in milliseconds
 
 ## Configuration
 
-### Included Endpoints
+### Internal API Endpoints - Included
 
 The interceptor applies to all `/api/**` endpoints:
 - `/api/v1/auth/**` - Authentication
@@ -71,16 +114,26 @@ The interceptor applies to all `/api/**` endpoints:
 - `/api/v1/users/**` - Users
 - `/api/v1/posts/**` - Posts
 
-### Excluded Endpoints
+### Internal API Endpoints - Excluded
 
 The following endpoints are excluded from logging:
 - `/actuator/**` - Health and metrics endpoints
 - `/swagger-ui/**` - Swagger UI assets
 - `/v3/api-docs/**` - OpenAPI documentation
 
+### External API Configuration
+
+The `RestTemplate` is configured with:
+- **Connect Timeout**: 5 seconds (time to establish connection)
+- **Read Timeout**: 10 seconds (time to receive response)
+- **Buffering**: Enabled (allows reading response multiple times)
+- **Logging Interceptor**: Automatically measures all outbound calls
+
+All external HTTP calls made through `RestTemplate` are automatically logged.
+
 ## Performance Thresholds
 
-### Slow Request Alert
+### Internal API - Slow Request Alert
 
 Requests taking longer than **1000ms (1 second)** trigger a warning:
 
@@ -88,9 +141,30 @@ Requests taking longer than **1000ms (1 second)** trigger a warning:
 WARN  ⚠ Slow Request Detected: GET /api/v1/events?page=0&size=100 took 1456ms
 ```
 
-This helps identify performance bottlenecks that need optimization.
+### External API - Slow Call Alert
+
+External API calls taking longer than **2000ms (2 seconds)** trigger a warning:
+
+```
+WARN  ⚠ Slow External API Call: GET https://jsonplaceholder.typicode.com/posts took 2345ms
+```
+
+This helps identify:
+- Internal performance bottlenecks
+- Slow external dependencies
+- Network latency issues
+- External service degradation
 
 ## Example Logs
+
+### Complete Request Flow with External API
+
+```
+2026-02-15 10:35:00.100  INFO  → Incoming Request: GET /api/v1/posts/1
+2026-02-15 10:35:00.105  INFO  ⟶ Outgoing Request: GET https://jsonplaceholder.typicode.com/posts/1
+2026-02-15 10:35:00.289  INFO  ⟵ ✓ External API Response: GET https://jsonplaceholder.typicode.com/posts/1 - Status: 200 - Duration: 184ms
+2026-02-15 10:35:00.295  INFO  ← ✓ Response: GET /api/v1/posts/1 - Status: 200 - Duration: 195ms
+```
 
 ### Successful Authentication Flow
 
@@ -116,12 +190,24 @@ This helps identify performance bottlenecks that need optimization.
 2026-02-15 10:32:00.115  INFO  ← ✗ Response: GET /api/v1/events/invalid-uuid - Status: 404 - Duration: 15ms
 ```
 
-### Slow Request
+### External API Error
 
 ```
-2026-02-15 10:33:00.200  INFO  → Incoming Request: GET /api/v1/events?page=0&size=1000
-2026-02-15 10:33:01.567  INFO  ← ✓ Response: GET /api/v1/events?page=0&size=1000 - Status: 200 - Duration: 1367ms
-2026-02-15 10:33:01.568  WARN  ⚠ Slow Request Detected: GET /api/v1/events?page=0&size=1000 took 1367ms
+2026-02-15 10:36:00.200  INFO  → Incoming Request: GET /api/v1/posts/9999
+2026-02-15 10:36:00.205  INFO  ⟶ Outgoing Request: GET https://jsonplaceholder.typicode.com/posts/9999
+2026-02-15 10:36:00.361  INFO  ⟵ ✗ External API Response: GET https://jsonplaceholder.typicode.com/posts/9999 - Status: 404 - Duration: 156ms
+2026-02-15 10:36:00.365  INFO  ← ✗ Response: GET /api/v1/posts/9999 - Status: 404 - Duration: 165ms
+```
+
+### Slow Request with Slow External API
+
+```
+2026-02-15 10:33:00.200  INFO  → Incoming Request: GET /api/v1/posts
+2026-02-15 10:33:00.205  INFO  ⟶ Outgoing Request: GET https://jsonplaceholder.typicode.com/posts
+2026-02-15 10:33:02.550  INFO  ⟵ ✓ External API Response: GET https://jsonplaceholder.typicode.com/posts - Status: 200 - Duration: 2345ms
+2026-02-15 10:33:02.551  WARN  ⚠ Slow External API Call: GET https://jsonplaceholder.typicode.com/posts took 2345ms
+2026-02-15 10:33:02.560  INFO  ← ✓ Response: GET /api/v1/posts - Status: 200 - Duration: 2360ms
+2026-02-15 10:33:02.561  WARN  ⚠ Slow Request Detected: GET /api/v1/posts took 2360ms
 ```
 
 ## Use Cases
