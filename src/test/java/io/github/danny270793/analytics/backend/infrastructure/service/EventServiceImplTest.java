@@ -7,6 +7,7 @@ import io.github.danny270793.analytics.backend.domain.model.EventType;
 import io.github.danny270793.analytics.backend.domain.exception.EventNotFoundException;
 import io.github.danny270793.analytics.backend.domain.exception.UnauthorizedAccessException;
 import io.github.danny270793.analytics.backend.infrastructure.persistence.entity.EventEntity;
+import io.github.danny270793.analytics.backend.infrastructure.persistence.entity.UserEntity;
 import io.github.danny270793.analytics.backend.infrastructure.persistence.repository.EventJpaRepository;
 import io.github.danny270793.analytics.backend.infrastructure.persistence.repository.UserJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,9 +71,17 @@ class EventServiceImplTest {
         testEvent.setCreatedAt(LocalDateTime.now());
         testEvent.setUpdatedAt(LocalDateTime.now());
 
+        // Mock SecurityContext properly
         SecurityContextHolder.setContext(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getName()).thenReturn(testUserId.toString());
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("testuser");
+        
+        // Mock UserJpaRepository to return a user when looking up by username
+        UserEntity mockUser = new UserEntity();
+        mockUser.setId(testUserId);
+        mockUser.setUsername("testuser");
+        when(userJpaRepository.findByUsername("testuser")).thenReturn(Optional.of(mockUser));
     }
 
     @Test
