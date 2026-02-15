@@ -238,7 +238,7 @@ POST /api/events
 
 ### Security Configuration
 
-- **Public Endpoints**: `/api/auth/**`, `/swagger-ui/**`, `/v3/api-docs/**`
+- **Public Endpoints**: `/api/v1/auth/**`, `/swagger-ui/**`, `/v3/api-docs/**`
 - **Protected Endpoints**: All others require valid JWT
 - **CSRF**: Disabled (stateless JWT authentication)
 - **CORS**: Configured for allowed origins

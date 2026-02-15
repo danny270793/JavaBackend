@@ -137,7 +137,7 @@ Analytics Backend is a **production-ready** Spring Boot application for event tr
 
 ### Recommended for Production
 - [ ] Implement refresh token mechanism
-- [ ] Add rate limiting on /api/auth endpoints
+- [ ] Add rate limiting on /api/v1/auth endpoints
 - [ ] Implement account lockout after failed logins
 - [ ] Add password complexity requirements
 - [ ] Enable HTTPS/TLS
@@ -150,8 +150,8 @@ Analytics Backend is a **production-ready** Spring Boot application for event tr
 ## API Endpoints
 
 ### Public Endpoints
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
+- `POST /api/v1/auth/register` - User registration
+- `POST /api/v1/auth/login` - User login
 
 ### Protected Endpoints (Requires JWT)
 - `GET /api/users` - List users (paginated)

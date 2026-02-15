@@ -10,6 +10,7 @@ Spring Boot backend application for analytics tracking with event management, us
 - **User Management**: User registration, login, profile management with soft delete support
 - **External API Integration**: Posts endpoint fetching data from JSONPlaceholder API
 - **Ownership-based Authorization**: Users can only access/modify their own resources
+- **API Versioning**: URI-based versioning (v1) for backwards compatibility
 
 ### Architecture & Quality
 - **Clean Architecture**: Separation of concerns across Domain, Application, Infrastructure, and Presentation layers
@@ -27,6 +28,7 @@ Spring Boot backend application for analytics tracking with event management, us
 - **Security**: Spring Security with JWT tokens, BCrypt password encoding, and CORS configuration
 - **Health Monitoring**: Spring Boot Actuator endpoints for application health checks
 - **API Documentation**: Interactive Swagger/OpenAPI 3.0 documentation with authentication support
+- **Request Logging**: Automatic performance tracking with duration logging for every API request
 
 ## Quick Start
 
@@ -109,6 +111,7 @@ See [Testing Documentation](docs/TESTING.md) for comprehensive testing guide.
 - **[Docker Documentation](docs/DOCKER_DOCUMENTATION.md)** - Docker setup, deployment, and best practices
 
 ### API Documentation
+- **[API Versioning](docs/API_VERSIONING.md)** - Version strategy, lifecycle, and migration guides
 - **[Swagger/OpenAPI Documentation](docs/SWAGGER.md)** - Interactive API documentation and testing
 - **[API Documentation](docs/API_DOCUMENTATION.md)** - Event CRUD API endpoints and examples
 - **[User API Documentation](docs/USER_API_DOCUMENTATION.md)** - User management and authentication endpoints
@@ -116,6 +119,7 @@ See [Testing Documentation](docs/TESTING.md) for comprehensive testing guide.
 
 ### Development
 - **[Testing Documentation](docs/TESTING.md)** - Comprehensive testing guide and coverage reports
+- **[Request Logging](docs/REQUEST_LOGGING.md)** - Performance monitoring and request timing logs
 - **[Database Migrations](docs/DATABASE_MIGRATIONS.md)** - Liquibase migration management guide
 - **[Liquibase Quick Start](docs/LIQUIBASE_QUICK_START.md)** - Quick reference for creating migrations
 - **[PostgreSQL Migration](docs/POSTGRESQL_MIGRATION.md)** - H2 to PostgreSQL migration guide
@@ -205,17 +209,23 @@ backend/
 
 ## API Overview
 
+### API Versioning
+
+All API endpoints are versioned using URI-based versioning. Current version: **v1**
+
+See [API Versioning Documentation](docs/API_VERSIONING.md) for details on versioning strategy and migration.
+
 ### Authentication
 ```bash
 # Login
-POST /api/auth/login
+POST /api/v1/auth/login
 {
   "username": "admin",
   "password": "admin"
 }
 
 # Register
-POST /api/auth/register
+POST /api/v1/auth/register
 {
   "username": "newuser",
   "email": "user@example.com",
@@ -226,7 +236,7 @@ POST /api/auth/register
 ### Events (Requires Authentication)
 ```bash
 # Create Event
-POST /api/events
+POST /api/v1/events
 Authorization: Bearer <token>
 {
   "type": "NAVIGATION",
@@ -235,33 +245,33 @@ Authorization: Bearer <token>
 }
 
 # Get All Events
-GET /api/events
+GET /api/v1/events
 Authorization: Bearer <token>
 ```
 
 ### Users (Requires Authentication)
 ```bash
 # Get All Users (with pagination)
-GET /api/users?page=0&size=20&sortBy=username&direction=ASC
+GET /api/v1/users?page=0&size=20&sortBy=username&direction=ASC
 Authorization: Bearer <token>
 
 # Get User by ID
-GET /api/users/{id}
+GET /api/v1/users/{id}
 Authorization: Bearer <token>
 
 # Delete User (soft delete)
-DELETE /api/users/{id}
+DELETE /api/v1/users/{id}
 Authorization: Bearer <token>
 ```
 
 ### Posts (External API Integration)
 ```bash
 # Get All Posts
-GET /api/posts
+GET /api/v1/posts
 Authorization: Bearer <token>
 
 # Get Post by ID
-GET /api/posts/{id}
+GET /api/v1/posts/{id}
 Authorization: Bearer <token>
 ```
 

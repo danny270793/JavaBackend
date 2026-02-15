@@ -4,7 +4,7 @@ Complete JWT-based authentication system protecting Event and User CRUD endpoint
 
 ## Overview
 
-The application now uses **JWT (JSON Web Token)** authentication to secure all CRUD operations on Event and User entities. Only the authentication endpoints (`/api/auth/**`) remain public.
+The application now uses **JWT (JSON Web Token)** authentication to secure all CRUD operations on Event and User entities. Only the authentication endpoints (`/api/v1/auth/**`) remain public.
 
 ## Authentication Flow
 
@@ -12,7 +12,7 @@ The application now uses **JWT (JSON Web Token)** authentication to secure all C
 First, create a user account:
 
 ```bash
-curl -X POST http://localhost:8080/api/auth/register \
+curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "username": "johndoe",
@@ -36,7 +36,7 @@ curl -X POST http://localhost:8080/api/auth/register \
 Authenticate with your credentials to receive a JWT token:
 
 ```bash
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "johndoe",
@@ -83,15 +83,15 @@ All endpoints except authentication are now protected:
 - `DELETE /api/users/{id}` - Delete user
 
 ### Public Endpoints (No Authentication Required)
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login
+- `POST /api/v1/auth/register` - Register new user
+- `POST /api/v1/auth/login` - Login
 - `GET /h2-console/**` - H2 database console (development only)
 
 ## Complete Example Workflow
 
 ### Step 1: Register
 ```bash
-curl -X POST http://localhost:8080/api/auth/register \
+curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "username": "alice",
@@ -102,7 +102,7 @@ curl -X POST http://localhost:8080/api/auth/register \
 
 ### Step 2: Login and Extract Token
 ```bash
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "alice",
@@ -231,7 +231,7 @@ When your token expires (after 24 hours by default), you'll receive a 401 error.
 
 ### 3. Login Request Setup
 - Method: POST
-- URL: `{{base_url}}/api/auth/login`
+- URL: `{{base_url}}/api/v1/auth/login`
 - Body (JSON):
   ```json
   {

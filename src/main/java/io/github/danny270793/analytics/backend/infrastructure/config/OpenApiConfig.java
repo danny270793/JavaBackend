@@ -50,6 +50,6 @@ public class OpenApiConfig {
                                         .type(SecurityScheme.Type.HTTP)
                                         .scheme("bearer")
                                         .bearerFormat("JWT")
-                                        .description("Enter JWT token obtained from /api/auth/login endpoint")));
+                                        .description("Enter JWT token obtained from /api/v1/auth/login endpoint")));
     }
 }

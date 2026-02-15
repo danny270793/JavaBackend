@@ -16,7 +16,7 @@ A default admin user is created automatically via database migration.
 #### 1. Login to Get JWT Token
 
 ```bash
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "admin",
@@ -170,7 +170,7 @@ SELECT id, username, email, created_at FROM users WHERE username = 'admin';
 
 ```bash
 # Login as admin
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "admin",
@@ -221,7 +221,7 @@ Username: admin
 Password: admin
 
 # Login
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"admin"}'
 

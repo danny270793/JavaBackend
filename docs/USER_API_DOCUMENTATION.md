@@ -33,7 +33,7 @@ Following the same Clean Architecture pattern as the Event CRUD:
 Create a new user account with encrypted password.
 
 ```http
-POST /api/auth/register
+POST /api/v1/auth/register
 Content-Type: application/json
 
 {
@@ -63,7 +63,7 @@ Content-Type: application/json
 Authenticate user with username and password.
 
 ```http
-POST /api/auth/login
+POST /api/v1/auth/login
 Content-Type: application/json
 
 {
@@ -171,7 +171,7 @@ DELETE /api/users/{id}
 
 ### 1. Register a New User
 ```bash
-curl -X POST http://localhost:8080/api/auth/register \
+curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "username": "johndoe",
@@ -182,7 +182,7 @@ curl -X POST http://localhost:8080/api/auth/register \
 
 ### 2. Login
 ```bash
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "johndoe",
