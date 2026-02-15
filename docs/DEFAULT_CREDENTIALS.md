@@ -2,7 +2,7 @@
 
 ## Admin User
 
-A default admin user is created automatically via database migration.
+A default admin user is created automatically on application startup via `AdminUserSeeder`.
 
 ### Credentials
 
@@ -10,6 +10,10 @@ A default admin user is created automatically via database migration.
 - **Password**: `admin`
 - **Email**: `admin@analytics.local`
 - **User ID**: `00000000-0000-0000-0000-000000000001`
+
+### Active Profiles
+
+✅ **All profiles** (dev, prod, test) - Admin user is always created for initial access
 
 ### Usage
 
@@ -57,99 +61,90 @@ curl -X GET http://localhost:8080/api/events \
 
 Before deploying to production:
 
-1. **Delete or Disable the Migration**
-   ```bash
-   # Remove the migration file
-   rm src/main/resources/db/changelog/changes/003-insert-default-admin-user.yaml
+1. **Change Admin Password Immediately**
+   - Login with default credentials
+   - Change password via application or database
+   - Document the new password securely
+
+2. **Disable AdminUserSeeder in Production (Optional)**
+   - Remove or comment out `@Configuration` annotation
+   - Or add `@Profile("!prod")` to skip in production
    
-   # Or add a context to skip in production
-   ```
-
-2. **Or Change the Password**
-   ```bash
-   # After first deployment, login and change password
-   # Or create a migration to update the admin password
-   ```
-
-3. **Or Use Production-Only Migration**
-   ```yaml
-   # Add context to skip in production
-   changeSet:
-     id: 003-insert-default-admin-user
-     author: analytics-backend
-     context: dev, test  # Skips in production
-   ```
+3. **Monitor First Access**
+   - Log and audit admin user creation
+   - Track when default password is changed
 
 ### Best Practices
 
 1. **Development/Testing Only**
    - Use default credentials only for local development
    - Never commit production credentials
+   - Change password immediately after first production deployment
 
-2. **Change Immediately**
-   ```bash
-   # After first login, change the password via API
-   # (Would need to implement password change endpoint)
-   ```
+2. **Automatic Creation**
+   - Admin user created on every first startup
+   - Idempotent (won't create duplicates)
+   - Consistent UUID across deployments
 
-3. **Environment-Specific**
-   ```properties
-   # application-prod.properties
-   spring.liquibase.contexts=prod
-   ```
+3. **Environment-Specific Actions**
+   - **Dev**: Default credentials are acceptable
+   - **Test**: Default credentials for automated testing
+   - **Prod**: **MUST** change password immediately
 
 ## Implementation Details
 
-### Migration File
+### AdminUserSeeder Component
 
-**Location:** `src/main/resources/db/changelog/changes/003-insert-default-admin-user.yaml`
+**Location:** `io.github.danny270793.analytics.backend.infrastructure.config.AdminUserSeeder`
 
-**Changeset:**
-```yaml
-databaseChangeLog:
-  - changeSet:
-      id: 003-insert-default-admin-user
-      author: analytics-backend
-      changes:
-        - insert:
-            tableName: users
-            columns:
-              - column:
-                  name: id
-                  value: 00000000-0000-0000-0000-000000000001
-              - column:
-                  name: username
-                  value: admin
-              - column:
-                  name: email
-                  value: admin@analytics.local
-              - column:
-                  name: password
-                  value: $2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
-              - column:
-                  name: created_at
-                  valueComputed: CURRENT_TIMESTAMP
-              - column:
-                  name: updated_at
-                  valueComputed: CURRENT_TIMESTAMP
+**Type:** Spring `@Configuration` with `CommandLineRunner`
+
+**Code Structure:**
+```java
+@Configuration
+public class AdminUserSeeder {
+    @Bean
+    CommandLineRunner seedAdminUser(
+        UserJpaRepository userRepository,
+        PasswordEncoder passwordEncoder
+    ) {
+        return args -> {
+            // Check if admin user exists
+            if (userRepository.findByUsername("admin").isPresent()) {
+                log.info("👤 Admin user already exists - skipping creation");
+                return;
+            }
+            
+            // Create admin user with fixed UUID and credentials
+            UserEntity adminUser = new UserEntity();
+            adminUser.setId(UUID.fromString("00000000-0000-0000-0000-000000000001"));
+            adminUser.setUsername("admin");
+            adminUser.setEmail("admin@analytics.local");
+            adminUser.setPassword(passwordEncoder.encode("admin"));
+            
+            userRepository.save(adminUser);
+            log.info("✅ Default admin user created successfully");
+        };
+    }
+}
 ```
+
+### Execution Flow
+
+1. Spring Boot application starts
+2. Liquibase creates database schema
+3. `CommandLineRunner` beans execute
+4. `AdminUserSeeder` checks if admin exists
+5. If not exists, creates admin user with BCrypt password
+6. Application logs creation status
 
 ### Password Encryption
 
 - **Algorithm**: BCrypt
 - **Plain Password**: `admin`
-- **BCrypt Hash**: `$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
-- **Rounds**: 10 (default)
-
-### Rollback
-
-The changeset includes a rollback script:
-```yaml
-rollback:
-  - delete:
-      tableName: users
-      where: username = 'admin'
-```
+- **Encryption**: Performed dynamically by `PasswordEncoder` at runtime
+- **Rounds**: 10 (Spring Security default)
+- **Idempotent**: If admin exists, creation is skipped
 
 ## Testing
 
@@ -189,7 +184,7 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
 TOKEN="<your-jwt-token>"
 
 # Delete admin user
-curl -X DELETE http://localhost:8080/api/users/00000000-0000-0000-0000-000000000001 \
+curl -X DELETE http://localhost:8080/api/v1/users/00000000-0000-0000-0000-000000000001 \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -203,14 +198,25 @@ docker exec -it analytics-postgres psql -U analytics -d analyticsdb
 DELETE FROM users WHERE username = 'admin';
 ```
 
-### Option 3: Remove Migration (Before Deployment)
+### Option 3: Disable AdminUserSeeder (Before Deployment)
 
-```bash
-# Delete the migration file
-rm src/main/resources/db/changelog/changes/003-insert-default-admin-user.yaml
+**Method A: Profile-based**
+```java
+// Change @Configuration to only run in dev/test
+@Configuration
+@Profile({"dev", "test"})  // Skip in prod
+public class AdminUserSeeder {
+    // ...
+}
+```
 
-# Rebuild
-./gradlew clean build
+**Method B: Remove annotation**
+```java
+// Comment out @Configuration
+// @Configuration
+public class AdminUserSeeder {
+    // ...
+}
 ```
 
 ## Quick Reference
@@ -232,9 +238,12 @@ curl -X GET http://localhost:8080/api/users \
 
 ## Summary
 
-✅ **Default admin user created automatically via Liquibase migration**
-✅ **Credentials**: admin/admin
-✅ **BCrypt encrypted password**
+✅ **Default admin user created automatically via `AdminUserSeeder`**  
+✅ **Active in all profiles** (dev, prod, test)  
+✅ **Credentials**: admin/admin  
+✅ **BCrypt encrypted password**  
+✅ **Fixed UUID for consistency**  
+✅ **Idempotent creation** (won't create duplicates)  
 ✅ **Ready to use immediately after startup**
 
-⚠️ **Remember to remove or change in production!**
+⚠️ **Remember to change password in production!**
