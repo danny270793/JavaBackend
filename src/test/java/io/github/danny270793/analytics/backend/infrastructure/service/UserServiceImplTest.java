@@ -15,7 +15,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
@@ -47,7 +46,6 @@ class UserServiceImplTest {
     @Mock
     private JwtUtil jwtUtil;
 
-    @InjectMocks
     private UserServiceImpl userService;
 
     private UserEntity testUser;
@@ -55,6 +53,9 @@ class UserServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        // Explicit constructor injection
+        userService = new UserServiceImpl(userJpaRepository, passwordEncoder, jwtUtil);
+        
         testUserId = UUID.randomUUID();
         testUser = new UserEntity();
         testUser.setId(testUserId);
