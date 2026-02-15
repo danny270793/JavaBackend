@@ -53,7 +53,12 @@ public class PostServiceImpl implements PostService {
         
         try {
             PostResponse post = restTemplate.getForObject(url, PostResponse.class);
-            log.info("Successfully fetched post: id={}, title={}", post.getId(), post.getTitle());
+            
+            if (post != null) {
+                log.info("Successfully fetched post: id={}, title={}", post.getId(), post.getTitle());
+            } else {
+                log.warn("Post with id={} not found in external API", id);
+            }
             
             return post;
         } catch (Exception e) {
