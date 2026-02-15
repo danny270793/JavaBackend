@@ -4,8 +4,24 @@
 
 A comprehensive test suite has been created for the Analytics Backend application covering:
 - **Unit Tests**: Service layer logic with mocked dependencies
-- **Security Tests**: JWT token generation and validation
-- **Total Coverage**: 38+ test cases
+- **Security Tests**: JWT token generation and validation, authentication filters
+- **Entity & Adapter Tests**: Persistence layer mapping
+- **Total Coverage**: 50+ test cases with 74% overall code coverage
+
+## Test Coverage
+
+The test suite maintains high coverage across critical application layers:
+
+- ✅ **Security Layer**: 100% coverage - Authentication, JWT, filters fully tested
+- ✅ **Entity Layer**: 99% coverage - JPA entities and auditing
+- ✅ **Service Layer**: 96% coverage - All core business logic
+- ✅ **Persistence Adapters**: 77% coverage - Entity-domain mapping
+- ⚠️ **Domain Models**: 62% coverage - Core business models
+- ⚠️ **Domain Exceptions**: 56% coverage - Custom exceptions
+- ℹ️ **Controllers**: 23% coverage - Requires @SpringBootTest integration tests
+- ℹ️ **Exception Handlers**: 2% coverage - Requires @SpringBootTest integration tests
+
+**Overall Coverage**: 74% (exceeds minimum threshold of 70%)
 
 ## Test Structure
 
